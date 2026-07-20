@@ -1,0 +1,24 @@
+# Codex CLI configuration — pre-loaded MESA MCP servers
+
+[mcp_servers.irods]
+command = "/usr/local/bin/irods-mcp-server"
+args = []
+
+[mcp_servers.irods.env]
+IRODS_HOST = "data.cyverse.org"
+IRODS_PORT = "1247"
+IRODS_ZONE_NAME = "iplant"
+IRODS_MCP_SVR_IRODS_SHARED_DIR_NAME = "shared"
+
+[mcp_servers.mesa]
+command = "/usr/local/bin/mesa-mcp"
+args = []
+
+[mcp_servers.mesa.env]
+MESA_MCP_IRODS__HOST = "data.cyverse.org"
+MESA_MCP_IRODS__PORT = "1247"
+MESA_MCP_IRODS__ZONE = "iplant"
+
+[mcp_servers.filesystem]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"]

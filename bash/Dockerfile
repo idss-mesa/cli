@@ -9,6 +9,9 @@ LABEL org.label-schema.name="CyVerse VICE Cloud Shell" \
 
 USER root
 
+# Target architecture set by buildx: amd64 or arm64
+ARG TARGETARCH
+
 # Add sudo to user
 ARG LOCAL_USER=jovyan
 
@@ -35,17 +38,26 @@ RUN apt-get update && \
     libglib2.0-0 libxext6 libsm6 libxrender1 \
     gettext-base git mercurial subversion \
     tmux curl grep sed dpkg && \
-    curl -L "https://github.com/krallin/tini/releases/download/v0.19.0/tini_0.19.0-amd64.deb" > tini.deb && \
-    dpkg -i tini.deb && \
-    rm tini.deb && \
+    curl -L "https://github.com/krallin/tini/releases/download/v0.19.0/tini-${TARGETARCH}" > /usr/bin/tini && \
+    chmod +x /usr/bin/tini && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Go
-RUN wget -q -c https://dl.google.com/go/go1.25.5.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
+RUN wget -q -c https://dl.google.com/go/go1.25.5.linux-${TARGETARCH}.tar.gz -O - | sudo tar -xz -C /usr/local
+
+# Build the iRODS MCP server (stdio MCP access to the CyVerse Data Store)
+# https://github.com/idss-mesa/irods-mcp-server
+# NOTE: the base image sets ENV HOME=/home/jovyan even for root, so keep the
+# Go caches in /tmp or they land root-owned in jovyan's home
+RUN git clone --depth 1 https://github.com/idss-mesa/irods-mcp-server /tmp/irods-mcp-server && \
+    cd /tmp/irods-mcp-server && \
+    CGO_ENABLED=0 GOPATH=/tmp/go GOCACHE=/tmp/go-cache /usr/local/go/bin/go build -o /usr/local/bin/irods-mcp-server ./cmd/main.go && \
+    cd / && rm -rf /tmp/irods-mcp-server /tmp/go /tmp/go-cache
 
 # install ttyd
-RUN curl -L "https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64" > ttyd && \
+RUN TTYD_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo aarch64 || echo x86_64) && \
+    curl -L "https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.${TTYD_ARCH}" > ttyd && \
     chmod a+x ttyd && \
     mv ttyd /usr/local/bin/ttyd
 
@@ -61,18 +73,20 @@ RUN apt-get update && \
 # https://learning.cyverse.org/ds/gocommands/
 RUN cd /usr/local/bin && \
     GOCMD_VER=$(curl -L -s https://raw.githubusercontent.com/cyverse/gocommands/main/VERSION.txt); \
-    curl -L -s https://github.com/cyverse/gocommands/releases/download/${GOCMD_VER}/gocmd-${GOCMD_VER}-linux-amd64.tar.gz | tar zxvf -
+    curl -L -s https://github.com/cyverse/gocommands/releases/download/${GOCMD_VER}/gocmd-${GOCMD_VER}-linux-${TARGETARCH}.tar.gz | tar zxvf -
 
-# update terminal message
+# update terminal message (MESA ANSI splash) and matching shell prompt
 ENV PATH=${PATH}:/usr/games
 COPY 01-custom /etc/motd
+COPY mesa-prompt.sh /etc/profile.d/mesa-prompt.sh
 RUN chmod +x /etc/motd
 
 # install git-credential-manager
-RUN wget https://github.com/git-ecosystem/git-credential-manager/releases/download/v2.7.3/gcm-linux-x64-2.7.3.deb && \
+RUN GCM_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) && \
+    wget https://github.com/git-ecosystem/git-credential-manager/releases/download/v2.7.3/gcm-linux-${GCM_ARCH}-2.7.3.deb && \
     apt-get update && \
-    apt-get install -y ./gcm-linux-x64-2.7.3.deb && \
-    rm gcm-linux-x64-2.7.3.deb && \
+    apt-get install -y ./gcm-linux-${GCM_ARCH}-2.7.3.deb && \
+    rm gcm-linux-${GCM_ARCH}-2.7.3.deb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -84,10 +98,20 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # install AWS CLI
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+RUN AWS_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo aarch64 || echo x86_64) && \
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-${AWS_ARCH}.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update && \
     rm -rf awscliv2.zip aws
+
+# Install mesa-mcp and mesa-ducklake (https://github.com/idss-mesa)
+# into a dedicated venv: they need Python >=3.11 and the geospatial
+# conda env pins 3.10, so they get the base conda Python instead.
+RUN /opt/conda/bin/python3 -m venv /opt/mesa && \
+    /opt/mesa/bin/pip install --no-cache-dir \
+      git+https://github.com/idss-mesa/mesa-ducklake.git \
+      git+https://github.com/idss-mesa/mesa-mcp.git && \
+    ln -s /opt/mesa/bin/mesa-mcp /opt/mesa/bin/mesa-ducklake /usr/local/bin/
 
 # Configure FUSE for non-root users and create OSN directory
 RUN echo "user_allow_other" >> /etc/fuse.conf && \
@@ -116,13 +140,22 @@ RUN npm config set prefix /home/jovyan/.npm-global && \
 # Install Antigravity CLI (replaces deprecated Google Gemini CLI — deadline June 18 2026)
 # https://antigravity.google/blog/introducing-google-antigravity-cli
 # Binary: agy, installed to ~/.local/bin
-RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
+RUN mkdir -p /home/jovyan/.cache/antigravity/staging && \
+    curl -fsSL https://antigravity.google/cli/install.sh | bash
 
 # Install OpenCode (https://opencode.ai/) — --no-modify-path avoids shell detection hang in Docker
 RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 
+# Pre-load the irods / mesa / filesystem MCP servers for every agent CLI:
+# Claude Code, Codex, OpenCode, and Antigravity
+COPY --chown=1000:100 configs/claude.json /home/jovyan/.claude.json
+COPY --chown=1000:100 configs/codex-config.toml /home/jovyan/.codex/config.toml
+COPY --chown=1000:100 configs/opencode.json /home/jovyan/.config/opencode/opencode.json
+COPY --chown=1000:100 configs/antigravity-mcp_config.json /home/jovyan/.gemini/config/mcp_config.json
+
 # Configure bashrc
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo ". /etc/profile.d/mesa-prompt.sh" >> ~/.bashrc && \
     echo '[ ! -z "$TERM" -a -r /etc/motd ] && /etc/motd' >> ~/.bashrc && \
     echo $'\n# upgrade GoCommands\nsudo gocmd upgrade > /dev/null' >> ~/.bashrc
 

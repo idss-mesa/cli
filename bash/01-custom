@@ -1,18 +1,77 @@
 #!/bin/bash
-MSG="CyVerse VICE"
-figlet $MSG | lolcat;
+# MESA cloud shell landing screen — ANSI port of docs/mesa-terminal.html.
+# Truecolor palette and mesa geometry follow the HTML mockup; the matching
+# shell prompt lives in /etc/profile.d/mesa-prompt.sh.
+
+W=68
+R=$'\e[0m'
+
+sky() { printf '\e[48;2;%sm' "$1"; }
+fg()  { printf '\e[38;2;%sm' "$1"; }
+
+# one terrain row: sky padding, solid rock band, sky padding
+band() { # $1 sky-rgb  $2 start-col  $3 band-width  $4 band-rgb
+  sky "$1"; printf '%*s' "$2" ''
+  printf '\e[48;2;%sm%*s' "$4" "$3" ''
+  sky "$1"; printf '%*s' "$((W - $2 - $3))" ''
+  printf '%s\n' "$R"
+}
+
 echo
-neofetch
+
+# starfield
+sky '10;22;40';  fg '254;243;199'
+printf '%-68.68s' '    .         +       .          *         .        +          *    '
+printf '%s\n' "$R"
+sky '13;27;46';  fg '254;243;199'
+printf '%-68.68s' '         *        .         .        +          .    *        .     '
+printf '%s\n' "$R"
+
+# mesa: flat cap, stepped ledges widening to a broad base, talus, ground
+band '15;33;54' 21 26 '212;113;42'   # cap
+band '17;38;60' 19 30 '201;149;90'   # upper cliff
+band '18;42;66' 19 30 '201;149;90'
+band '20;46;72' 16 36 '155;90;40'    # mid cliff
+band '21;50;78' 16 36 '155;90;40'
+band '23;54;83' 12 43 '126;68;24'    # lower cliff
+band '24;56;85' 12 43 '126;68;24'
+band '25;58;85'  7 54 '92;46;10'     # base
+band '26;58;85'  7 54 '92;46;10'
+band '26;58;85'  4 61 '46;16;4'      # talus
+printf '\e[48;2;30;10;2m%*s%s\n' "$W" '' "$R"   # ground
+
+# water with ripples and label
+printf '\e[48;2;26;143;168m\e[38;2;45;212;191m%-68.68s%s\n' \
+  '   ~~~~        ~~~~~~          ~~~~       ~~~~~~        ~~~~      ~' "$R"
+printf '\e[48;2;26;143;168m\e[38;2;45;212;191m%-68.68s%s\n' \
+  '                    ~  C Y V E R S E . O R G  ~                    ' "$R"
+
+# info panel
+M=$(fg '74;98;114'); C=$(fg '45;212;191'); T=$(fg '205;217;229')
+kv() { printf '  %s%-7s%s%s%s\n' "$C" "$1" "$T" "$2" "$R"; }
+
 echo
-echo "Welcome to Cloud Shell."
-echo
-echo "Your CyVerse Username is:" $IPLANT_USER
-echo
-echo "To transfer files to or from the Data Store use GoCommands, type 'gocmd help' for options"
-echo
-echo "Your personal folders and Community Released folders are also mounted to the directory '/data-store/'"
-echo
-echo "Want to know more? Learning Center Documentation: https://learning.cyverse.org"
-echo
-echo "About this Tool & App: https://github.com/cyverse-vice/cli"
+printf '  %s%s%s\n' "$M" '──────────────────────────────────────────────────────────────' "$R"
+. /etc/os-release 2>/dev/null
+cpu_model=$(awk -F': +' '/model name/{print $2; exit}' /proc/cpuinfo 2>/dev/null)
+[ -z "$cpu_model" ] && cpu_model=$(uname -m)
+kv USER   "${IPLANT_USER:-$(whoami)}@mesa.cyverse.org"
+kv OS     "${PRETTY_NAME:-Linux} $(uname -m)"
+kv SHELL  "bash ${BASH_VERSION%%(*}"
+kv UP     "$(uptime -p 2>/dev/null | sed 's/^up //')"
+kv MEM    "$(free -h 2>/dev/null | awk '/^Mem:/{print $3 " / " $2}')"
+kv CPU    "$cpu_model ($(nproc) cores)"
+kv MCP    "irods · mesa · filesystem"
+kv AGENTS "claude · codex · agy · opencode"
+
+# palette swatches
+printf '  '
+for c in '212;113;42' '201;149;90' '155;90;40' '92;46;10' '61;26;4' '45;212;191' '26;143;168'; do
+  printf '\e[48;2;%sm  \e[0m ' "$c"
+done
+printf '\n\n'
+
+# hints
+printf '  %sData Store transfers: gocmd help · personal + community folders: /data-store%s\n' "$M" "$R"
+printf '  %shttps://learning.cyverse.org · https://github.com/idss-mesa/cli%s\n' "$M" "$R"
 echo

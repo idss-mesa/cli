@@ -1,0 +1,31 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "irods": {
+      "type": "local",
+      "command": ["/usr/local/bin/irods-mcp-server"],
+      "enabled": true,
+      "environment": {
+        "IRODS_HOST": "data.cyverse.org",
+        "IRODS_PORT": "1247",
+        "IRODS_ZONE_NAME": "iplant",
+        "IRODS_MCP_SVR_IRODS_SHARED_DIR_NAME": "shared"
+      }
+    },
+    "mesa": {
+      "type": "local",
+      "command": ["/usr/local/bin/mesa-mcp"],
+      "enabled": true,
+      "environment": {
+        "MESA_MCP_IRODS__HOST": "data.cyverse.org",
+        "MESA_MCP_IRODS__PORT": "1247",
+        "MESA_MCP_IRODS__ZONE": "iplant"
+      }
+    },
+    "filesystem": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"],
+      "enabled": true
+    }
+  }
+}

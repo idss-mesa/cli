@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CyVerse Mesa Terminal</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sky:    #8dd4ed;
+    --orange: #d4712a;
+    --tan:    #c9955a;
+    --brown:  #9b5a28;
+    --dark:   #6b3510;
+    --shadow: #3d1a04;
+    --cyan:   #2dd4bf;
+    --water:  #1a8fa8;
+    --bg:     #090c12;
+    --panel:  #0c1018;
+    --border: #1a2433;
+    --text:   #cdd9e5;
+    --muted:  #4a6272;
+    --green:  #4ade80;
+    --star:   #fef3c7;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 2rem;
+  }
+
+  .window {
+    width: 100%;
+    max-width: 800px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 0 80px rgba(0,0,0,0.9), 0 0 140px rgba(45,212,191,0.05);
+    overflow: hidden;
+    animation: fadeIn 0.7s ease both;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .titlebar {
+    background: #121820;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.red    { background: #ff5f57; }
+  .dot.yellow { background: #febc2e; }
+  .dot.green  { background: #28c840; }
+  .titlebar-label {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .terminal {
+    padding: 24px 28px 28px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  /* SVG mesa scene */
+  .mesa-scene {
+    width: 100%;
+    margin-bottom: 20px;
+    animation: slideIn 0.8s ease 0.1s both;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Info + swatches */
+  .info-block {
+    animation: fadeIn 0.6s ease 0.45s both;
+  }
+  .info {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 3px 18px;
+  }
+  .info-key {
+    color: var(--cyan);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+  .info-val {
+    color: var(--text);
+    font-size: 12px;
+  }
+  .divider {
+    color: var(--muted);
+    margin: 14px 0 12px;
+    font-size: 12px;
+  }
+  .swatches {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+  }
+  .swatch {
+    width: 18px; height: 18px;
+    border-radius: 3px;
+  }
+  .prompt {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    animation: fadeIn 0.6s ease 0.7s both;
+    font-size: 13px;
+  }
+  .p-user { color: var(--green); }
+  .p-at   { color: var(--muted); }
+  .p-host { color: var(--cyan);  }
+  .p-path { color: var(--muted); }
+  .p-sym  { color: var(--orange); margin: 0 6px; }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--cyan);
+    border-radius: 1px;
+    animation: blink 1.1s step-end infinite;
+    vertical-align: middle;
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; } 50% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <div class="titlebar-label">bash — cyverse@mesa ~ — 100×30</div>
+  </div>
+
+  <div class="terminal">
+
+    <!-- SVG Mesa Scene -->
+    <svg class="mesa-scene" viewBox="0 0 760 260" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+
+      <!-- Sky gradient -->
+      <defs>
+        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#0a1628"/>
+          <stop offset="100%" stop-color="#1a3a55"/>
+        </linearGradient>
+        <linearGradient id="capGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#d4712a"/>
+          <stop offset="100%" stop-color="#b85e1e"/>
+        </linearGradient>
+        <linearGradient id="upperGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#c9955a"/>
+          <stop offset="100%" stop-color="#b07a3e"/>
+        </linearGradient>
+        <linearGradient id="midGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#9b5a28"/>
+          <stop offset="100%" stop-color="#7e4418"/>
+        </linearGradient>
+        <linearGradient id="lowerGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#7e4418"/>
+          <stop offset="100%" stop-color="#5c2e0a"/>
+        </linearGradient>
+        <linearGradient id="baseGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#5c2e0a"/>
+          <stop offset="100%" stop-color="#3d1a04"/>
+        </linearGradient>
+        <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#1a8fa8"/>
+          <stop offset="100%" stop-color="#0e6070"/>
+        </linearGradient>
+        <!-- subtle rock texture via noise pattern -->
+        <filter id="roughen">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise"/>
+          <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <linearGradient id="shadowSide" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="#000" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#000" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Sky background -->
+      <rect width="760" height="260" fill="url(#skyGrad)"/>
+
+      <!-- Stars -->
+      <g fill="#fef3c7" opacity="0.7">
+        <circle cx="42"  cy="18" r="1"/>
+        <circle cx="120" cy="8"  r="1.2"/>
+        <circle cx="210" cy="22" r="0.8"/>
+        <circle cx="310" cy="12" r="1"/>
+        <circle cx="430" cy="6"  r="1.3"/>
+        <circle cx="510" cy="20" r="0.9"/>
+        <circle cx="600" cy="10" r="1"/>
+        <circle cx="680" cy="25" r="1.1"/>
+        <circle cx="730" cy="14" r="0.8"/>
+        <circle cx="75"  cy="38" r="0.7"/>
+        <circle cx="560" cy="35" r="0.9"/>
+        <circle cx="660" cy="42" r="0.7"/>
+      </g>
+
+      <!--
+        MESA GEOMETRY
+        Real mesa: narrow flat top, then steps/ledges widening out to a broad base
+        Top rim: x=240..520  (280px wide)
+        Base:    x=80..680   (600px wide)
+
+        Layers from top to bottom:
+          cap top:      y=70
+          cap bottom:   y=82   x=240..520
+          ledge 1 top:  y=82   x=215..545
+          ledge 1 bot:  y=108  x=215..545
+          ledge 2 top:  y=108  x=180..580
+          ledge 2 bot:  y=140  x=180..580
+          ledge 3 top:  y=140  x=140..620
+          ledge 3 bot:  y=172  x=140..620
+          base top:     y=172  x=80..680
+          base bot:     y=210  x=80..680
+          talus slope:  y=210..220 fans out to ground
+      -->
+
+      <!-- Flat cap top surface -->
+      <rect x="240" y="70" width="280" height="12" fill="url(#capGrad)" rx="1"/>
+
+      <!-- Cap face / upper cliff -->
+      <polygon points="215,82 240,70 520,70 545,82 545,108 215,108" fill="url(#upperGrad)"/>
+      <!-- Cap top edge highlight -->
+      <line x1="240" y1="70" x2="520" y2="70" stroke="#e8a060" stroke-width="1.5" opacity="0.6"/>
+
+      <!-- Ledge 1 setback surface -->
+      <rect x="215" y="108" width="4"   height="3" fill="#c9a06088"/>
+      <rect x="541" y="108" width="4"   height="3" fill="#c9a06088"/>
+
+      <!-- Mid cliff band -->
+      <polygon points="180,108 215,108 545,108 580,108 580,140 180,140" fill="url(#midGrad)"/>
+      <!-- Horizontal strata line -->
+      <line x1="180" y1="124" x2="580" y2="124" stroke="#7e4418" stroke-width="0.8" opacity="0.5"/>
+
+      <!-- Ledge 2 surface hints -->
+      <rect x="180" y="140" width="5" height="3" fill="#9b5a2866"/>
+      <rect x="575" y="140" width="5" height="3" fill="#9b5a2866"/>
+
+      <!-- Lower cliff -->
+      <polygon points="140,140 180,140 580,140 620,140 620,172 140,172" fill="url(#lowerGrad)"/>
+      <!-- Strata -->
+      <line x1="140" y1="156" x2="620" y2="156" stroke="#5c2e0a" stroke-width="0.8" opacity="0.5"/>
+
+      <!-- Broad base -->
+      <polygon points="80,172 140,172 620,172 680,172 680,210 80,210" fill="url(#baseGrad)"/>
+      <!-- Base strata -->
+      <line x1="80"  y1="188" x2="680" y2="188" stroke="#3d1a04" stroke-width="1"   opacity="0.6"/>
+      <line x1="80"  y1="200" x2="680" y2="200" stroke="#3d1a04" stroke-width="0.6" opacity="0.4"/>
+
+      <!-- Talus / debris slope at base — fans out wider than the cliff -->
+      <polygon points="40,220 80,210 680,210 720,220 740,228 20,228" fill="#2e1004"/>
+
+      <!-- Ground level -->
+      <rect x="0" y="228" width="760" height="6" fill="#1e0a02"/>
+
+      <!-- Right-side shadow on cliff faces -->
+      <polygon points="520,70 545,82 545,108 580,108 580,140 620,140 620,172 680,172 680,210 720,220 740,228 760,228 760,228 760,70" fill="url(#shadowSide)" opacity="0.35"/>
+
+      <!-- Water / wash at bottom -->
+      <rect x="0" y="234" width="760" height="26" fill="url(#waterGrad)"/>
+
+      <!-- Water ripple lines -->
+      <g stroke="#2dd4bf" stroke-width="0.8" opacity="0.4" fill="none">
+        <path d="M 30 241 Q 100 238 170 241 Q 240 244 310 241"/>
+        <path d="M 200 248 Q 290 245 380 248 Q 470 251 560 248 Q 640 245 720 248"/>
+        <path d="M 50 255 Q 150 252 250 255 Q 350 258 450 255 Q 540 252 650 255"/>
+      </g>
+
+      <!-- Water label -->
+      <text x="380" y="252" text-anchor="middle" font-family="'Share Tech Mono', monospace"
+            font-size="9" fill="#2dd4bf" opacity="0.75" letter-spacing="4">
+        ≈  C Y V E R S E . O R G  ≈
+      </text>
+
+    </svg>
+
+    <!-- Info panel -->
+    <div class="info-block">
+      <div class="divider">────────────────────────────────────────────────</div>
+      <div class="info">
+        <span class="info-key">USER</span>   <span class="info-val">researcher@mesa.cyverse.org</span>
+        <span class="info-key">OS</span>     <span class="info-val">Ubuntu 24.04 LTS x86_64</span>
+        <span class="info-key">SHELL</span>  <span class="info-val">bash 5.2.21</span>
+        <span class="info-key">UP</span>     <span class="info-val">3 days, 7 hours, 12 mins</span>
+        <span class="info-key">MEM</span>    <span class="info-val">12.4G / 62.8G</span>
+        <span class="info-key">CPU</span>    <span class="info-val">AMD EPYC 7742 (64) @ 2.250GHz</span>
+        <span class="info-key">JOBS</span>   <span class="info-val">3 running</span>
+      </div>
+      <div class="swatches">
+        <div class="swatch" style="background:#d4712a"></div>
+        <div class="swatch" style="background:#c9955a"></div>
+        <div class="swatch" style="background:#9b5a28"></div>
+        <div class="swatch" style="background:#5c2e0a"></div>
+        <div class="swatch" style="background:#3d1a04"></div>
+        <div class="swatch" style="background:#2dd4bf"></div>
+        <div class="swatch" style="background:#1a8fa8"></div>
+      </div>
+    </div>
+
+    <div class="prompt">
+      <span class="p-user">researcher</span><span class="p-at">@</span><span class="p-host">mesa</span><span class="p-path"> ~/projects</span><span class="p-sym">$&gt;</span>
+      <span class="cursor"></span>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
