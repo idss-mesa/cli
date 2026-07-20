@@ -188,6 +188,11 @@ RUN mamba env create -f /home/jovyan/environment.yml
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> /home/jovyan/.bash_profile && \
     echo "conda activate geospatial" >> /home/jovyan/.bash_profile
 
+# COPY --chown does not chown the parent dirs it auto-creates, so ~/.config
+# was left root-owned and jovyan could not create ~/.config/aiverde at runtime
+# (aiverde-setup). Restore ownership of jovyan's config tree.
+RUN sudo chown -R 1000:100 /home/jovyan/.config /home/jovyan/.codex /home/jovyan/.gemini
+
 ENTRYPOINT ["bash", "/bin/entry.sh"]
 
 CMD ["ttyd", "bash"]
