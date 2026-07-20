@@ -1,5 +1,28 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  "model": "aiverde/js2/gpt-oss-120b",
+  "provider": {
+    "aiverde": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "CyVerse AI Verde",
+      "options": {
+        "baseURL": "https://llm-api.cyverse.ai/v1",
+        "apiKey": "{env:LLM_API_KEY}"
+      },
+      "models": {
+        "js2/gpt-oss-120b": { "name": "gpt-oss-120b (Jetstream2)" },
+        "nrp/gpt-oss": { "name": "gpt-oss" },
+        "nrp/glm-5": { "name": "GLM-5" },
+        "nrp/glm-4.7": { "name": "GLM-4.7" },
+        "nrp/qwen3": { "name": "Qwen3" },
+        "nrp/qwen3-small": { "name": "Qwen3 (small)" },
+        "nrp/kimi": { "name": "Kimi" },
+        "nrp/gemma": { "name": "Gemma" },
+        "nrp/minimax-m2": { "name": "MiniMax-M2" },
+        "phi-4-multimodal-instruct": { "name": "Phi-4 multimodal" }
+      }
+    }
+  },
   "mcp": {
     "irods": {
       "type": "local",

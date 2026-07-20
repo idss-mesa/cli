@@ -47,7 +47,7 @@ printf '\e[48;2;26;143;168m\e[38;2;45;212;191m%-68.68s%s\n' \
   '                    ~  C Y V E R S E . O R G  ~                    ' "$R"
 
 # info panel
-M=$(fg '74;98;114'); C=$(fg '45;212;191'); T=$(fg '205;217;229')
+M=$(fg '74;98;114'); C=$(fg '45;212;191'); T=$(fg '205;217;229'); c_green=$(fg '74;222;128')
 kv() { printf '  %s%-7s%s%s%s\n' "$C" "$1" "$T" "$2" "$R"; }
 
 echo
@@ -72,6 +72,12 @@ done
 printf '\n\n'
 
 # hints
+if [ -f "$HOME/.config/aiverde/env" ]; then
+  printf '  %sAI Verde LLMs: connected%s · %sswitch models in-CLI%s\n' "$C" "$R" "$M" "$R"
+else
+  printf '  %sConnect AI Verde LLMs:%s %saiverde-setup%s  %s(needs your chat.cyverse.ai API key)%s\n' \
+    "$C" "$R" "$c_green" "$R" "$M" "$R"
+fi
 printf '  %sData Store transfers: gocmd help · personal + community folders: /data-store%s\n' "$M" "$R"
 printf '  %shttps://learning.cyverse.org · https://github.com/idss-mesa/cli%s\n' "$M" "$R"
 echo

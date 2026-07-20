@@ -1,4 +1,18 @@
-# Codex CLI configuration — pre-loaded MESA MCP servers
+# Codex CLI configuration — pre-loaded MESA MCP servers and the CyVerse
+# AI Verde LLM provider. The API key is NOT stored here: Codex reads it from
+# the LLM_API_KEY environment variable, which each user sets by running
+# `aiverde-setup` (their per-user CILogon-issued key).
+
+# Route Codex to AI Verde by default. Users pick a model with /model in-session;
+# the model below is a sensible course default and easy to change.
+model = "js2/gpt-oss-120b"
+model_provider = "aiverde"
+
+[model_providers.aiverde]
+name = "CyVerse AI Verde"
+base_url = "https://llm-api.cyverse.ai/v1"
+env_key = "LLM_API_KEY"
+wire_api = "chat"
 
 [mcp_servers.irods]
 command = "/usr/local/bin/irods-mcp-server"

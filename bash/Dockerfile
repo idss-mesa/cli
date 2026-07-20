@@ -126,15 +126,19 @@ ENV GCM_CREDENTIAL_STORE=cache
 # Copy scripts while still root and set permissions
 COPY entry.sh /bin
 COPY osn-mount.sh /usr/local/bin/
+COPY configs/aiverde-setup.sh /usr/local/bin/aiverde-setup
 RUN chmod +x /bin/entry.sh && \
-    chmod +x /usr/local/bin/osn-mount.sh
+    chmod +x /usr/local/bin/osn-mount.sh && \
+    chmod +x /usr/local/bin/aiverde-setup
 
 USER jovyan
 
-# Install Claude Code and OpenAI Codex via npm
+# Install Claude Code, OpenAI Codex, and Claude Code Router via npm
 # (npm install is preferred over claude.ai/install.sh for Docker builds)
+# ccr (claude-code-router) lets Claude Code talk to AI Verde's non-Anthropic
+# models; see aiverde-setup and https://github.com/musistudio/claude-code-router
 RUN npm config set prefix /home/jovyan/.npm-global && \
-    npm install -g @anthropic-ai/claude-code @openai/codex && \
+    npm install -g @anthropic-ai/claude-code @openai/codex @musistudio/claude-code-router && \
     npm cache clean --force
 
 # Install Antigravity CLI (replaces deprecated Google Gemini CLI — deadline June 18 2026)
