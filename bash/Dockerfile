@@ -181,6 +181,7 @@ COPY mesa-prompt.sh /etc/profile.d/mesa-prompt.sh
 COPY --chmod=755 entry.sh /bin/entry.sh
 COPY --chmod=755 osn-mount.sh /usr/local/bin/osn-mount.sh
 COPY --chmod=755 configs/aiverde-setup.sh /usr/local/bin/aiverde-setup
+COPY --chmod=755 configs/cyverse-login.sh /usr/local/bin/cyverse-login
 
 # Pre-load the irods / mesa / filesystem MCP servers for every agent CLI
 # (Claude Code, Codex, OpenCode, Antigravity).

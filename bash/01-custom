@@ -72,6 +72,14 @@ done
 printf '\n\n'
 
 # hints
+# CyVerse Data Store auth — show first; anonymous (public) until you log in.
+if [ -s "$HOME/.irods/.irodsA" ] && grep -q '"irods_user_name": *"[^"]\+"' "$HOME/.irods/irods_environment.json" 2>/dev/null; then
+  _irods_user=$(sed -n 's/.*"irods_user_name": *"\([^"]*\)".*/\1/p' "$HOME/.irods/irods_environment.json")
+  printf '  %sCyVerse Data Store: signed in as %s%s\n' "$C" "${_irods_user}" "$R"
+else
+  printf '  %sSign in to your CyVerse account:%s %scyverse-login%s  %s(else public/anonymous access only)%s\n' \
+    "$C" "$R" "$c_green" "$R" "$M" "$R"
+fi
 if [ -f "$HOME/.config/aiverde/env" ]; then
   printf '  %sAI Verde LLMs: connected%s · %sswitch models in-CLI%s\n' "$C" "$R" "$M" "$R"
 else
