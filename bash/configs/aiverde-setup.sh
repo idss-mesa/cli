@@ -113,7 +113,8 @@ else
 fi
 
 echo
-say "Codex:    codex        (provider 'aiverde', model $default_model)"
-say "OpenCode: opencode     (provider 'aiverde')"
+say "OpenCode: opencode     (provider 'aiverde', model $default_model)"
+note "Codex is not wired to AI Verde (Codex dropped chat-completions support;"
+note "AI Verde does not serve the Responses API). Codex uses its own OpenAI auth."
 echo
 warn "Run 'source ~/.config/aiverde/env' now, or open a new terminal, to load your key."
