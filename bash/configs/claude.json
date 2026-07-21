@@ -1,15 +1,8 @@
 {
   "mcpServers": {
     "irods": {
-      "type": "stdio",
-      "command": "/usr/local/bin/irods-mcp-server",
-      "args": [],
-      "env": {
-        "IRODS_HOST": "data.cyverse.org",
-        "IRODS_PORT": "1247",
-        "IRODS_ZONE_NAME": "iplant",
-        "IRODS_MCP_SVR_IRODS_SHARED_DIR_NAME": "shared"
-      }
+      "type": "http",
+      "url": "https://mcp.cyverse.ai/mcp"
     },
     "mesa": {
       "type": "stdio",

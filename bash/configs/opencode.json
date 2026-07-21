@@ -25,15 +25,9 @@
   },
   "mcp": {
     "irods": {
-      "type": "local",
-      "command": ["/usr/local/bin/irods-mcp-server"],
-      "enabled": true,
-      "environment": {
-        "IRODS_HOST": "data.cyverse.org",
-        "IRODS_PORT": "1247",
-        "IRODS_ZONE_NAME": "iplant",
-        "IRODS_MCP_SVR_IRODS_SHARED_DIR_NAME": "shared"
-      }
+      "type": "remote",
+      "url": "https://mcp.cyverse.ai/mcp",
+      "enabled": true
     },
     "mesa": {
       "type": "local",

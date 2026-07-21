@@ -9,7 +9,7 @@ A browser-based terminal ([ttyd](https://github.com/tsl0922/ttyd) + `bash` insid
 | Category | Tools |
 | --- | --- |
 | **AI agent CLIs** | Claude Code (`claude`), OpenAI Codex (`codex`), OpenCode (`opencode`), Antigravity (`agy`), Claude Code Router (`ccr`) |
-| **MCP servers** | `irods` (Go, [idss-mesa/irods-mcp-server](https://github.com/idss-mesa/irods-mcp-server)), `mesa` ([idss-mesa/mesa-mcp](https://github.com/idss-mesa/mesa-mcp) + [mesa-ducklake](https://github.com/idss-mesa/mesa-ducklake)), `filesystem` — pre-registered for every agent CLI |
+| **MCP servers** | `irods` (CyVerse Data Store), `mesa` ([mesa-mcp](https://github.com/idss-mesa/mesa-mcp) + [mesa-ducklake](https://github.com/idss-mesa/mesa-ducklake)), `formation` ([formation-mcp](https://github.com/idss-mesa/formation-mcp), CyVerse DE), `filesystem` — pre-registered for every agent CLI |
 | **AI Verde** | `aiverde-setup` helper wires OpenCode + Claude Code (via `ccr`) to `https://llm-api.cyverse.ai` |
 | **CyVerse data** | GoCommands (`gocmd`), iRODS config, `s3fs`/OSN mounts (`osn-mount.sh`), AWS CLI |
 | **Dev** | GitHub CLI (`gh`), Git Credential Manager, Go 1.25, Node.js 22 |
@@ -24,6 +24,21 @@ docker run --rm -p 7681:7681 harbor.cyverse.org/vice/mesa-cli:latest
 ```
 
 Then open <http://localhost:7681>. `:latest` is `linux/amd64` (cloud servers); `:arm64` is the native Apple Silicon build.
+
+## Sign in to CyVerse
+
+```bash
+cyverse-login          # your CyVerse username + password
+```
+
+Writes the standard iRODS credential files (`~/.irods/`) so GoCommands, the `mesa`
+and `formation` MCP servers, and the agents all act as **you** — with write/own
+access to your home and shared collections. Without it you get anonymous, public
+read-only access. The `irods` MCP server points at CyVerse's hosted, OAuth-backed
+[Data Store MCP](https://mcp.cyverse.ai/mcp) for Claude Code and OpenCode (they
+authenticate via CyVerse Keycloak on first use); Codex and Antigravity use the
+bundled local iRODS server. Restart an agent after logging in so its MCP servers
+pick up the credentials.
 
 ## Connect AI Verde LLMs
 
