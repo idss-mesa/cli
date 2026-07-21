@@ -193,6 +193,11 @@ RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> /home/jovyan/.bash_profile && 
 # (aiverde-setup). Restore ownership of jovyan's config tree.
 RUN sudo chown -R 1000:100 /home/jovyan/.config /home/jovyan/.codex /home/jovyan/.gemini
 
+# ttyd runs the shell inside tmux (see entry.sh), which captures the wheel; without
+# mouse mode the scroll wheel can't reach the terminal scrollback. Enable it.
+# (Appended here, after the conda layer, so config tweaks don't bust that cache.)
+RUN echo "set -g mouse on" >> /home/jovyan/.tmux.conf
+
 ENTRYPOINT ["bash", "/bin/entry.sh"]
 
 CMD ["ttyd", "bash"]
