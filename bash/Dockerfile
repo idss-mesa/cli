@@ -168,6 +168,15 @@ RUN mamba env create -f /home/jovyan/environment.yml
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> /home/jovyan/.bash_profile && \
     echo "conda activate geospatial" >> /home/jovyan/.bash_profile
 
+# Build formation-mcp (Go MCP server for the CyVerse Discovery Environment /
+# Formation API — launch apps, manage analyses). https://github.com/idss-mesa/formation-mcp
+# After the conda layer so it does not bust that cache; Go caches to /tmp.
+RUN git clone --depth 1 https://github.com/idss-mesa/formation-mcp /tmp/formation-mcp && \
+    cd /tmp/formation-mcp && \
+    CGO_ENABLED=0 GOPATH=/tmp/go GOCACHE=/tmp/go-cache /usr/local/go/bin/go build -o /tmp/formation-mcp-bin ./cmd/formation-mcp && \
+    sudo install -m 0755 /tmp/formation-mcp-bin /usr/local/bin/formation-mcp && \
+    cd / && sudo rm -rf /tmp/formation-mcp /tmp/formation-mcp-bin /tmp/go /tmp/go-cache
+
 # ---------------------------------------------------------------------------
 # Config / assets last, AFTER the conda layer, so editing the splash, the
 # shell prompt, entry.sh, aiverde-setup, or any agent-CLI config rebuilds in
@@ -182,6 +191,9 @@ COPY --chmod=755 entry.sh /bin/entry.sh
 COPY --chmod=755 osn-mount.sh /usr/local/bin/osn-mount.sh
 COPY --chmod=755 configs/aiverde-setup.sh /usr/local/bin/aiverde-setup
 COPY --chmod=755 configs/cyverse-login.sh /usr/local/bin/cyverse-login
+# Replace the mesa-mcp symlink (from the venv install) with a shim that strips
+# empty MESA_MCP_* vars before launching the server. mesa-ducklake stays a symlink.
+COPY --chmod=755 configs/mesa-mcp-shim.sh /usr/local/bin/mesa-mcp
 
 # Pre-load the irods / mesa / filesystem MCP servers for every agent CLI
 # (Claude Code, Codex, OpenCode, Antigravity).

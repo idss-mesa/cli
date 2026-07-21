@@ -2,10 +2,11 @@
 # add irods config
 echo '{"irods_host": "data.cyverse.org", "irods_port": 1247, "irods_user_name": "$IPLANT_USER", "irods_zone_name": "iplant"}' | envsubst > $HOME/.irods/irods_environment.json
 
-# MCP servers (irods, mesa, filesystem) are pre-registered at build time for
-# Claude Code, Codex, OpenCode, and Antigravity. Feed the VICE username to the
-# mesa MCP server; the password is supplied by the user (MESA_MCP_IRODS__PASSWORD).
-export MESA_MCP_IRODS__USER="${IPLANT_USER:-}"
+# MCP servers (irods, mesa, formation, filesystem) are pre-registered at build
+# time. Do NOT export MESA_MCP_IRODS__USER here: mesa-mcp coerces an empty value
+# to None, which fails Config validation and kills the server at startup. With
+# the var absent, mesa uses ~/.irods/ (written by cyverse-login) and otherwise
+# falls back to anonymous public access.
 
 # Copy .gitconfig from volume mount (if it exists)
 if [ -f /data-store/iplant/home/$IPLANT_USER/.gitconfig ]; then

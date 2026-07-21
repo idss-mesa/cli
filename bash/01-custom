@@ -61,7 +61,7 @@ kv SHELL  "bash ${BASH_VERSION%%(*}"
 kv UP     "$(uptime -p 2>/dev/null | sed 's/^up //')"
 kv MEM    "$(free -h 2>/dev/null | awk '/^Mem:/{print $3 " / " $2}')"
 kv CPU    "$cpu_model ($(nproc) cores)"
-kv MCP    "irods · mesa · filesystem"
+kv MCP    "irods · mesa · formation · filesystem"
 kv AGENTS "claude · codex · agy · opencode"
 
 # palette swatches

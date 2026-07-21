@@ -26,6 +26,13 @@ MESA_MCP_IRODS__HOST = "data.cyverse.org"
 MESA_MCP_IRODS__PORT = "1247"
 MESA_MCP_IRODS__ZONE = "iplant"
 
+[mcp_servers.formation]
+command = "/usr/local/bin/formation-mcp"
+args = []
+
+[mcp_servers.formation.env]
+FORMATION_BASE_URL = "https://de.cyverse.org/formation"
+
 [mcp_servers.filesystem]
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"]

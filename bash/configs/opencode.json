@@ -45,6 +45,14 @@
         "MESA_MCP_IRODS__ZONE": "iplant"
       }
     },
+    "formation": {
+      "type": "local",
+      "command": ["/usr/local/bin/formation-mcp"],
+      "enabled": true,
+      "environment": {
+        "FORMATION_BASE_URL": "https://de.cyverse.org/formation"
+      }
+    },
     "filesystem": {
       "type": "local",
       "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"],

@@ -57,6 +57,21 @@ with open(sys.argv[1], "w") as f:
     f.write(encode(os.environ["PW"]))
 os.chmod(sys.argv[1], 0o600)
 PY
+
+# formation-mcp (CyVerse Discovery Environment / Formation API) uses the same
+# CyVerse credentials. Write its config file so the formation MCP server picks
+# them up automatically.
+FORMATION_URL="${FORMATION_BASE_URL:-https://de.cyverse.org/formation}"
+FMFILE="$HOME/.formation-mcp.yaml"
+( umask 177; cat > "$FMFILE" <<YAML
+base_url: $FORMATION_URL
+username: $user
+password: $pw
+log_level: info
+poll_interval: 5
+YAML
+)
+chmod 600 "$FMFILE"
 unset pw
 
 # Verify the credentials actually work, using the same python-irodsclient
@@ -73,11 +88,11 @@ except Exception as e:
     print(e, file=sys.stderr); sys.exit(1)
 PY
 then
-  say "Authenticated as $user. gocmd, the iRODS/mesa MCP servers, and the agent CLIs now use your account."
+  say "Authenticated as $user. gocmd, the iRODS/mesa/formation MCP servers, and the agent CLIs now use your account."
   note "Restart any already-open agent (claude / opencode) so its MCP servers pick up the new credentials."
 else
   warn "Wrote credentials, but the login test failed — removing them to keep you on"
   warn "safe anonymous access. Check your username/password and rerun cyverse-login."
-  rm -f "$AUTHFILE"
+  rm -f "$AUTHFILE" "$FMFILE"
   exit 1
 fi
