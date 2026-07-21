@@ -193,6 +193,9 @@ COPY --chmod=755 configs/aiverde-setup.sh /usr/local/bin/aiverde-setup
 COPY --chmod=755 configs/cyverse-login.sh /usr/local/bin/cyverse-login
 # Replace the mesa-mcp symlink (from the venv install) with a shim that strips
 # empty MESA_MCP_* vars before launching the server. mesa-ducklake stays a symlink.
+# Remove the symlink FIRST: COPY writes THROUGH a symlink to its target, which
+# would overwrite the real /opt/mesa/bin/mesa-mcp and make the shim exec itself.
+RUN sudo rm -f /usr/local/bin/mesa-mcp
 COPY --chmod=755 configs/mesa-mcp-shim.sh /usr/local/bin/mesa-mcp
 
 # Pre-load the irods / mesa / filesystem MCP servers for every agent CLI
