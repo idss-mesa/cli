@@ -11,14 +11,14 @@
       },
       "models": {
         "js2/gpt-oss-120b": { "name": "gpt-oss-120b (Jetstream2)" },
-        "nrp/gpt-oss": { "name": "gpt-oss" },
-        "nrp/glm-5": { "name": "GLM-5" },
-        "nrp/glm-4.7": { "name": "GLM-4.7" },
-        "nrp/qwen3": { "name": "Qwen3" },
-        "nrp/qwen3-small": { "name": "Qwen3 (small)" },
-        "nrp/kimi": { "name": "Kimi" },
-        "nrp/gemma": { "name": "Gemma" },
-        "nrp/minimax-m2": { "name": "MiniMax-M2" },
+        "nrp/gpt-oss": { "name": "gpt-oss (NRP)" },
+        "nrp/glm-5": { "name": "GLM-5 (NRP)" },
+        "nrp/glm-4.7": { "name": "GLM-4.7 (NRP)" },
+        "nrp/qwen3": { "name": "Qwen3 (NRP)" },
+        "nrp/qwen3-small": { "name": "Qwen3 small (NRP)" },
+        "nrp/kimi": { "name": "Kimi (NRP)" },
+        "nrp/gemma": { "name": "Gemma (NRP)" },
+        "nrp/minimax-m2": { "name": "MiniMax-M2 (NRP)" },
         "phi-4-multimodal-instruct": { "name": "Phi-4 multimodal" }
       }
     }

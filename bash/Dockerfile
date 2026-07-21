@@ -75,11 +75,7 @@ RUN cd /usr/local/bin && \
     GOCMD_VER=$(curl -L -s https://raw.githubusercontent.com/cyverse/gocommands/main/VERSION.txt); \
     curl -L -s https://github.com/cyverse/gocommands/releases/download/${GOCMD_VER}/gocmd-${GOCMD_VER}-linux-${TARGETARCH}.tar.gz | tar zxvf -
 
-# update terminal message (MESA ANSI splash) and matching shell prompt
 ENV PATH=${PATH}:/usr/games
-COPY 01-custom /etc/motd
-COPY mesa-prompt.sh /etc/profile.d/mesa-prompt.sh
-RUN chmod +x /etc/motd
 
 # install git-credential-manager
 RUN GCM_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) && \
@@ -123,14 +119,6 @@ RUN echo "user_allow_other" >> /etc/fuse.conf && \
 # set the ENV for the credential type
 ENV GCM_CREDENTIAL_STORE=cache
 
-# Copy scripts while still root and set permissions
-COPY entry.sh /bin
-COPY osn-mount.sh /usr/local/bin/
-COPY configs/aiverde-setup.sh /usr/local/bin/aiverde-setup
-RUN chmod +x /bin/entry.sh && \
-    chmod +x /usr/local/bin/osn-mount.sh && \
-    chmod +x /usr/local/bin/aiverde-setup
-
 USER jovyan
 
 # Install Claude Code, OpenAI Codex, and Claude Code Router via npm
@@ -149,13 +137,6 @@ RUN mkdir -p /home/jovyan/.cache/antigravity/staging && \
 
 # Install OpenCode (https://opencode.ai/) — --no-modify-path avoids shell detection hang in Docker
 RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
-
-# Pre-load the irods / mesa / filesystem MCP servers for every agent CLI:
-# Claude Code, Codex, OpenCode, and Antigravity
-COPY --chown=1000:100 configs/claude.json /home/jovyan/.claude.json
-COPY --chown=1000:100 configs/codex-config.toml /home/jovyan/.codex/config.toml
-COPY --chown=1000:100 configs/opencode.json /home/jovyan/.config/opencode/opencode.json
-COPY --chown=1000:100 configs/antigravity-mcp_config.json /home/jovyan/.gemini/config/mcp_config.json
 
 # Configure bashrc
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
@@ -176,9 +157,8 @@ EXPOSE 7681
 #set working directory
 WORKDIR /home/jovyan/data-store
 
-# Configure tmux and create iRODS directory
-RUN echo 'set-option -g status off' >> ~/.tmux.conf && \
-    mkdir /home/jovyan/.irods
+# create iRODS directory
+RUN mkdir /home/jovyan/.irods
 
 # activate base Python environment using mamba
 COPY environment.yml /home/jovyan/
@@ -188,15 +168,35 @@ RUN mamba env create -f /home/jovyan/environment.yml
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> /home/jovyan/.bash_profile && \
     echo "conda activate geospatial" >> /home/jovyan/.bash_profile
 
+# ---------------------------------------------------------------------------
+# Config / assets last, AFTER the conda layer, so editing the splash, the
+# shell prompt, entry.sh, aiverde-setup, or any agent-CLI config rebuilds in
+# seconds and does NOT invalidate the expensive `mamba env create` cache.
+# ---------------------------------------------------------------------------
+
+# System assets (root-owned). --chmod sets the mode without a separate RUN
+# (needed because USER is jovyan here and these live in root-owned paths).
+COPY --chmod=755 01-custom /etc/motd
+COPY mesa-prompt.sh /etc/profile.d/mesa-prompt.sh
+COPY --chmod=755 entry.sh /bin/entry.sh
+COPY --chmod=755 osn-mount.sh /usr/local/bin/osn-mount.sh
+COPY --chmod=755 configs/aiverde-setup.sh /usr/local/bin/aiverde-setup
+
+# Pre-load the irods / mesa / filesystem MCP servers for every agent CLI
+# (Claude Code, Codex, OpenCode, Antigravity).
+COPY --chown=1000:100 configs/claude.json /home/jovyan/.claude.json
+COPY --chown=1000:100 configs/codex-config.toml /home/jovyan/.codex/config.toml
+COPY --chown=1000:100 configs/opencode.json /home/jovyan/.config/opencode/opencode.json
+COPY --chown=1000:100 configs/antigravity-mcp_config.json /home/jovyan/.gemini/config/mcp_config.json
+
 # COPY --chown does not chown the parent dirs it auto-creates, so ~/.config
-# was left root-owned and jovyan could not create ~/.config/aiverde at runtime
+# is left root-owned and jovyan cannot create ~/.config/aiverde at runtime
 # (aiverde-setup). Restore ownership of jovyan's config tree.
 RUN sudo chown -R 1000:100 /home/jovyan/.config /home/jovyan/.codex /home/jovyan/.gemini
 
-# ttyd runs the shell inside tmux (see entry.sh), which captures the wheel; without
-# mouse mode the scroll wheel can't reach the terminal scrollback. Enable it.
-# (Appended here, after the conda layer, so config tweaks don't bust that cache.)
-RUN echo "set -g mouse on" >> /home/jovyan/.tmux.conf
+# tmux config: hide the status bar, and enable mouse mode so the scroll wheel
+# reaches the terminal scrollback (ttyd runs the shell inside tmux; see entry.sh).
+RUN printf 'set-option -g status off\nset -g mouse on\n' >> /home/jovyan/.tmux.conf
 
 ENTRYPOINT ["bash", "/bin/entry.sh"]
 
