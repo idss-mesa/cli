@@ -26,11 +26,14 @@ MESA_MCP_IRODS__HOST = "data.cyverse.org"
 MESA_MCP_IRODS__PORT = "1247"
 MESA_MCP_IRODS__ZONE = "iplant"
 
-# formation (CyVerse Discovery Environment) is NOT registered for Codex. It is
-# now a hosted, OAuth-protected remote MCP at https://de.cyverse.org/formation/mcp
-# (CyVerse/Keycloak authorization-code + PKCE). Codex's MCP client only supports
-# a static bearer_token, not the interactive browser OAuth flow, so it cannot
-# authenticate. Use OpenCode or Claude Code for formation — both do the login.
+# formation (CyVerse Discovery Environment — launch apps, manage analyses) is a
+# hosted, OAuth-protected remote MCP at https://de.cyverse.org/formation/mcp
+# (CyVerse/Keycloak authorization-code + PKCE). Codex 0.144+ speaks streamable
+# HTTP and detects the OAuth support automatically — authenticate with
+# `codex mcp login formation` (opens a CyVerse browser login).
+[mcp_servers.formation]
+url = "https://de.cyverse.org/formation/mcp"
+oauth_resource = "https://de.cyverse.org/formation/mcp"
 
 [mcp_servers.filesystem]
 command = "npx"
