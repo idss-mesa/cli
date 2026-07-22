@@ -15,12 +15,8 @@
       }
     },
     "formation": {
-      "type": "stdio",
-      "command": "/usr/local/bin/formation-mcp",
-      "args": [],
-      "env": {
-        "FORMATION_BASE_URL": "https://de.cyverse.org/formation"
-      }
+      "type": "http",
+      "url": "https://de.cyverse.org/formation/mcp"
     },
     "filesystem": {
       "type": "stdio",

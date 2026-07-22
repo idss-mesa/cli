@@ -168,14 +168,12 @@ RUN mamba env create -f /home/jovyan/environment.yml
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> /home/jovyan/.bash_profile && \
     echo "conda activate geospatial" >> /home/jovyan/.bash_profile
 
-# Build formation-mcp (Go MCP server for the CyVerse Discovery Environment /
-# Formation API — launch apps, manage analyses). https://github.com/idss-mesa/formation-mcp
-# After the conda layer so it does not bust that cache; Go caches to /tmp.
-RUN git clone --depth 1 https://github.com/idss-mesa/formation-mcp /tmp/formation-mcp && \
-    cd /tmp/formation-mcp && \
-    CGO_ENABLED=0 GOPATH=/tmp/go GOCACHE=/tmp/go-cache /usr/local/go/bin/go build -o /tmp/formation-mcp-bin ./cmd/formation-mcp && \
-    sudo install -m 0755 /tmp/formation-mcp-bin /usr/local/bin/formation-mcp && \
-    cd / && sudo rm -rf /tmp/formation-mcp /tmp/formation-mcp-bin /tmp/go /tmp/go-cache
+# formation (CyVerse Discovery Environment / Formation API — launch apps, manage
+# analyses) is now a hosted, OAuth-protected remote MCP at
+# https://de.cyverse.org/formation/mcp, registered directly in the agent configs
+# (opencode.json, claude.json, antigravity). No local binary is built: the old
+# Go server hit REST endpoints that are not deployed at that host, and each user
+# now authenticates in-agent with their own CyVerse (Keycloak) login.
 
 # ---------------------------------------------------------------------------
 # Config / assets last, AFTER the conda layer, so editing the splash, the

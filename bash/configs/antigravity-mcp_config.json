@@ -20,11 +20,7 @@
       }
     },
     "formation": {
-      "command": "/usr/local/bin/formation-mcp",
-      "args": [],
-      "env": {
-        "FORMATION_BASE_URL": "https://de.cyverse.org/formation"
-      }
+      "serverUrl": "https://de.cyverse.org/formation/mcp"
     },
     "filesystem": {
       "command": "npx",

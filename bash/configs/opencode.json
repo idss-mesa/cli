@@ -40,12 +40,9 @@
       }
     },
     "formation": {
-      "type": "local",
-      "command": ["/usr/local/bin/formation-mcp"],
-      "enabled": true,
-      "environment": {
-        "FORMATION_BASE_URL": "https://de.cyverse.org/formation"
-      }
+      "type": "remote",
+      "url": "https://de.cyverse.org/formation/mcp",
+      "enabled": true
     },
     "filesystem": {
       "type": "local",
