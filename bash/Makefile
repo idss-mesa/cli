@@ -1,6 +1,6 @@
 platform = linux/amd64
-repo = harbor.cyverse.org/vice/cli/bash
-tag = gpu-24.04
+repo = harbor.cyverse.org/vice/mesa-cli
+tag = latest
 repotag = $(repo):$(tag)
 
 build:
@@ -10,4 +10,4 @@ push:
 	docker push "$(repotag)"
 
 rmi:
-	socker rmi "$(repotag)"
+	docker rmi "$(repotag)"
