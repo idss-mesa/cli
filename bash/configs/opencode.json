@@ -30,15 +30,6 @@
       "enabled": true,
       "oauth": false
     },
-    "irods-auth": {
-      "type": "remote",
-      "url": "https://mcp.cyverse.ai/mcp",
-      "enabled": true,
-      "oauth": {
-        "clientId": "mcp-client",
-        "scope": "openid"
-      }
-    },
     "mesa": {
       "type": "local",
       "command": ["/usr/local/bin/mesa-mcp"],
