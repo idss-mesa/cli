@@ -40,18 +40,24 @@ For the hosted CyVerse Data Store MCP, Claude Code and OpenCode register **two**
 servers: `irods` points at the anonymous
 [public endpoint](https://mcp-public.cyverse.ai/mcp) (public data under
 `/iplant/home/shared`, no sign-in) and works out of the box; `irods-auth` points
-at the [authenticated endpoint](https://mcp.cyverse.ai/mcp) for your private home
-collection. `irods-auth` uses CyVerse's pre-registered OAuth client (`mcp-client`),
-which skips the Keycloak dynamic-registration step that otherwise fails with a
-"Trusted Hosts" error. Authenticate it once per session:
+at the [authenticated endpoint](https://mcp.cyverse.ai/mcp), which uses CyVerse's
+pre-registered OAuth client (`mcp-client`) to skip the Keycloak
+dynamic-registration step that otherwise fails with a "Trusted Hosts" error.
+
+In **Claude Code**, sign in to `irods-auth` once per session to reach your private
+home collection:
 
 ```bash
 claude mcp login irods-auth --no-browser   # opens a kc.cyverse.org URL; paste the redirect back
 ```
 
-Codex and Antigravity instead use the bundled **local** iRODS MCP server, which
-reads your `~/.irods` credentials directly (no OAuth). Restart an agent after
-logging in so its MCP servers pick up the credentials.
+**OpenCode** connects to both endpoints anonymously — because `mcp.cyverse.ai`
+answers unauthenticated requests, OpenCode never triggers the interactive login,
+so `irods-auth` stays anonymous there. For private-collection access under
+OpenCode (and for Codex/Antigravity), rely on `cyverse-login`: the bundled
+**local** `mesa`/iRODS MCP servers and `gocmd` read your `~/.irods` credentials
+directly (no OAuth) and act as you. Restart an agent after logging in so its MCP
+servers pick up the credentials.
 
 ## Connect AI Verde LLMs
 
