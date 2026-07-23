@@ -34,11 +34,24 @@ cyverse-login          # your CyVerse username + password
 Writes the standard iRODS credential files (`~/.irods/`) so GoCommands, the `mesa`
 and `formation` MCP servers, and the agents all act as **you** — with write/own
 access to your home and shared collections. Without it you get anonymous, public
-read-only access. The `irods` MCP server points at CyVerse's hosted, OAuth-backed
-[Data Store MCP](https://mcp.cyverse.ai/mcp) for Claude Code and OpenCode (they
-authenticate via CyVerse Keycloak on first use); Codex and Antigravity use the
-bundled local iRODS server. Restart an agent after logging in so its MCP servers
-pick up the credentials.
+read-only access.
+
+For the hosted CyVerse Data Store MCP, Claude Code and OpenCode register **two**
+servers: `irods` points at the anonymous
+[public endpoint](https://mcp-public.cyverse.ai/mcp) (public data under
+`/iplant/home/shared`, no sign-in) and works out of the box; `irods-auth` points
+at the [authenticated endpoint](https://mcp.cyverse.ai/mcp) for your private home
+collection. `irods-auth` uses CyVerse's pre-registered OAuth client (`mcp-client`),
+which skips the Keycloak dynamic-registration step that otherwise fails with a
+"Trusted Hosts" error. Authenticate it once per session:
+
+```bash
+claude mcp login irods-auth --no-browser   # opens a kc.cyverse.org URL; paste the redirect back
+```
+
+Codex and Antigravity instead use the bundled **local** iRODS MCP server, which
+reads your `~/.irods` credentials directly (no OAuth). Restart an agent after
+logging in so its MCP servers pick up the credentials.
 
 ## Connect AI Verde LLMs
 

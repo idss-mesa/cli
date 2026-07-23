@@ -2,7 +2,15 @@
   "mcpServers": {
     "irods": {
       "type": "http",
-      "url": "https://mcp.cyverse.ai/mcp"
+      "url": "https://mcp-public.cyverse.ai/mcp"
+    },
+    "irods-auth": {
+      "type": "http",
+      "url": "https://mcp.cyverse.ai/mcp",
+      "oauth": {
+        "clientId": "mcp-client",
+        "callbackPort": 8990
+      }
     },
     "mesa": {
       "type": "stdio",

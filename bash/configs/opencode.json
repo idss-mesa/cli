@@ -26,8 +26,18 @@
   "mcp": {
     "irods": {
       "type": "remote",
+      "url": "https://mcp-public.cyverse.ai/mcp",
+      "enabled": true,
+      "oauth": false
+    },
+    "irods-auth": {
+      "type": "remote",
       "url": "https://mcp.cyverse.ai/mcp",
-      "enabled": true
+      "enabled": true,
+      "oauth": {
+        "clientId": "mcp-client",
+        "scope": "openid"
+      }
     },
     "mesa": {
       "type": "local",
