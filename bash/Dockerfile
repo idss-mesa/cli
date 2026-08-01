@@ -138,6 +138,13 @@ RUN mkdir -p /home/jovyan/.cache/antigravity/staging && \
 # Install OpenCode (https://opencode.ai/) — --no-modify-path avoids shell detection hang in Docker
 RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 
+# Install Goose CLI (https://block.github.io/goose/) — headless install:
+# CONFIGURE=false skips the interactive setup wizard (required for Docker); the
+# binary lands in ~/.local/bin (already on PATH). Provider/key are wired at
+# runtime by aiverde-setup; MCP servers come from configs/goose-config.yaml.
+# bzip2/curl/ca-certificates (its only deps) are already installed above.
+RUN curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash
+
 # Configure bashrc
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
     echo ". /etc/profile.d/mesa-prompt.sh" >> ~/.bashrc && \
@@ -197,11 +204,12 @@ RUN sudo rm -f /usr/local/bin/mesa-mcp
 COPY --chmod=755 configs/mesa-mcp-shim.sh /usr/local/bin/mesa-mcp
 
 # Pre-load the irods / mesa / filesystem MCP servers for every agent CLI
-# (Claude Code, Codex, OpenCode, Antigravity).
+# (Claude Code, Codex, OpenCode, Antigravity, Goose).
 COPY --chown=1000:100 configs/claude.json /home/jovyan/.claude.json
 COPY --chown=1000:100 configs/codex-config.toml /home/jovyan/.codex/config.toml
 COPY --chown=1000:100 configs/opencode.json /home/jovyan/.config/opencode/opencode.json
 COPY --chown=1000:100 configs/antigravity-mcp_config.json /home/jovyan/.gemini/config/mcp_config.json
+COPY --chown=1000:100 configs/goose-config.yaml /home/jovyan/.config/goose/config.yaml
 
 # COPY --chown does not chown the parent dirs it auto-creates, so ~/.config
 # is left root-owned and jovyan cannot create ~/.config/aiverde at runtime

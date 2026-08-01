@@ -1,0 +1,70 @@
+# Goose CLI configuration for the MESA CyVerse VICE cloud shell.
+#
+# Provider/model + API key are supplied at runtime by `aiverde-setup`, which
+# exports GOOSE_PROVIDER=openai, GOOSE_MODEL, OPENAI_HOST, OPENAI_BASE_PATH,
+# OPENAI_API_KEY and GOOSE_DISABLE_KEYRING (containers have no keyring). API
+# keys are intentionally NOT stored here — Goose ignores keys in config.yaml.
+#
+# This file pre-registers the MESA MCP servers ("extensions") so Goose has the
+# same irods / mesa / formation / filesystem tools as the other agent CLIs.
+
+# Sensible default provider/model (overridden by aiverde-setup env at runtime).
+active_provider: openai
+providers:
+  openai:
+    enabled: true
+    model: js2/gpt-oss-120b
+    configured: true
+
+# Prompt before running tools/edits (auto | approve | smart_approve | chat).
+GOOSE_MODE: smart_approve
+
+extensions:
+  # Bundled file-edit / shell tools.
+  developer:
+    type: builtin
+    name: developer
+    bundled: true
+    enabled: true
+    timeout: 300
+
+  # CyVerse Data Store — anonymous public endpoint (public data under
+  # /iplant/home/shared; no sign-in). Matches opencode.json / claude.json.
+  irods:
+    type: streamable_http
+    name: irods
+    enabled: true
+    uri: "https://mcp-public.cyverse.ai/mcp"
+    timeout: 300
+
+  # MESA local stdio server (mesa-mcp + mesa-ducklake). Reads ~/.irods creds
+  # written by cyverse-login; falls back to anonymous public access.
+  mesa:
+    type: stdio
+    name: mesa
+    enabled: true
+    cmd: /usr/local/bin/mesa-mcp
+    args: []
+    envs:
+      MESA_MCP_IRODS__HOST: data.cyverse.org
+      MESA_MCP_IRODS__PORT: "1247"
+      MESA_MCP_IRODS__ZONE: iplant
+    timeout: 300
+
+  # CyVerse Discovery Environment (Formation API) — hosted OAuth remote MCP.
+  # Authenticate in-agent with your CyVerse (Keycloak) login.
+  formation:
+    type: streamable_http
+    name: formation
+    enabled: true
+    uri: "https://de.cyverse.org/formation/mcp"
+    timeout: 300
+
+  # Local filesystem access to the working + data-store directories.
+  filesystem:
+    type: stdio
+    name: filesystem
+    enabled: true
+    cmd: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"]
+    timeout: 300
