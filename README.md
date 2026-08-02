@@ -1,6 +1,6 @@
 # MESA CLI — CyVerse VICE Cloud Shell
 
-A browser-based terminal ([ttyd](https://github.com/tsl0922/ttyd) + `bash` inside `tmux`) for the **MESA** project, built to run as a [CyVerse Discovery Environment (VICE)](https://cyverse.org/discovery-environment) app. It bundles the MESA data-science stack, four AI coding-agent CLIs wired to CyVerse [AI Verde](https://aiverde-docs.cyverse.ai/) LLMs, MESA [MCP](https://modelcontextprotocol.io/) servers, and CyVerse Data Store tooling.
+A browser-based terminal ([ttyd](https://github.com/tsl0922/ttyd) + `bash` inside `tmux`) for the **MESA** project, built to run as a [CyVerse Discovery Environment (VICE)](https://cyverse.org/discovery-environment) app. It bundles the MESA data-science stack, five AI coding-agent CLIs wired to CyVerse [AI Verde](https://aiverde-docs.cyverse.ai/) LLMs, MESA [MCP](https://modelcontextprotocol.io/) servers, and CyVerse Data Store tooling.
 
 ![platforms](https://img.shields.io/badge/platforms-linux%2Famd64%20%7C%20linux%2Farm64-blue) ![registry](https://img.shields.io/badge/registry-harbor.cyverse.org%2Fvice%2Fmesa--cli-0a7bbb)
 
@@ -8,9 +8,9 @@ A browser-based terminal ([ttyd](https://github.com/tsl0922/ttyd) + `bash` insid
 
 | Category | Tools |
 | --- | --- |
-| **AI agent CLIs** | Claude Code (`claude`), OpenAI Codex (`codex`), OpenCode (`opencode`), Antigravity (`agy`), Claude Code Router (`ccr`) |
+| **AI agent CLIs** | Claude Code (`claude`), OpenAI Codex (`codex`), OpenCode (`opencode`), Goose (`goose`), Antigravity (`agy`), Claude Code Router (`ccr`) |
 | **MCP servers** | `irods` (CyVerse Data Store), `mesa` ([mesa-mcp](https://github.com/idss-mesa/mesa-mcp) + [mesa-ducklake](https://github.com/idss-mesa/mesa-ducklake)), `formation` ([formation-mcp](https://github.com/idss-mesa/formation-mcp), CyVerse DE), `filesystem` — pre-registered for every agent CLI |
-| **AI Verde** | `aiverde-setup` helper wires OpenCode + Claude Code (via `ccr`) to `https://llm-api.cyverse.ai` |
+| **AI Verde** | `aiverde-setup` helper wires OpenCode, Goose + Claude Code (via `ccr`) to `https://llm-api.cyverse.ai` |
 | **CyVerse data** | GoCommands (`gocmd`), iRODS config, `s3fs`/OSN mounts (`osn-mount.sh`), AWS CLI |
 | **Dev** | GitHub CLI (`gh`), Git Credential Manager, Go 1.25, Node.js 22 |
 | **Science** | `geospatial` conda env (GDAL, PDAL, GeoPandas, NumPy/SciPy, …), MiniConda/Mamba |
@@ -68,6 +68,7 @@ aiverde-setup          # paste your key from chat.cyverse.ai → Course → API 
 It validates the key against `/v1/models`, lists your models, and writes `~/.config/aiverde/env` (chmod 600). Then:
 
 - **OpenCode** — uses the `aiverde` provider directly.
+- **Goose** — uses the `openai` provider pointed at AI Verde (`goose`).
 - **Claude Code** — uses `ccr` for non-Anthropic models (`ccr code`), or the native `ANTHROPIC_BASE_URL` env path if your course serves Anthropic models.
 - **Codex** — *not* wired to AI Verde: Codex dropped Chat Completions support and AI Verde does not serve the Responses API. It runs on its own OpenAI auth.
 

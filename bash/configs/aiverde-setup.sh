@@ -6,7 +6,7 @@
 #   https://chat.cyverse.ai  →  Course → API Key tab
 # so the key is NEVER baked into this image. This helper captures the key at
 # runtime, validates it, and wires it into the pre-installed agent CLIs
-# (Codex, OpenCode, and — where supported — Claude Code).
+# (OpenCode, Goose, and — where supported — Claude Code).
 #
 # The key is written only to ~/.config/aiverde/env (chmod 600) in this
 # ephemeral container home; it is never committed or pushed anywhere.
@@ -79,6 +79,13 @@ export LLM_API_KEY="$KEY"
 # OpenAI-compatible aliases so plain OpenAI SDK code and tools work too
 export OPENAI_BASE_URL="$V1"
 export OPENAI_API_KEY="$KEY"
+# Goose (OpenAI-compatible provider -> AI Verde). Goose reads OPENAI_HOST +
+# OPENAI_BASE_PATH (not OPENAI_BASE_URL); no keyring exists in the container.
+export GOOSE_PROVIDER="openai"
+export GOOSE_MODEL="$default_model"
+export OPENAI_HOST="$BASE"
+export OPENAI_BASE_PATH="v1/chat/completions"
+export GOOSE_DISABLE_KEYRING="1"
 export AIVERDE_DEFAULT_MODEL="$default_model"
 EOF
 chmod 600 "$ENV_FILE"
@@ -114,6 +121,7 @@ fi
 
 echo
 say "OpenCode: opencode     (provider 'aiverde', model $default_model)"
+say "Goose:    goose        (provider openai -> AI Verde, model $default_model)"
 note "Codex is not wired to AI Verde (Codex dropped chat-completions support;"
 note "AI Verde does not serve the Responses API). Codex uses its own OpenAI auth."
 echo
