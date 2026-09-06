@@ -116,6 +116,8 @@ bash/
   configs/            agent-CLI configs + aiverde-setup helper
 docs/
   mesa-terminal.html  splash-screen design mockup
+  credential-security-assessment.md
+                      how user credentials are exposed to the bundled agents, and fixes
 ```
 
 ## Resources
