@@ -12,6 +12,28 @@ USER root
 # Target architecture set by buildx: amd64 or arm64
 ARG TARGETARCH
 
+# ---------------------------------------------------------------------------
+# Pinned upstream versions. Bump here (or override with --build-arg) to update.
+# Antigravity (agy) and GoCommands have no pin option and install latest; the
+# AWS CLI zip, Node.js (nodesource setup_22.x), and the base image tag are also
+# unpinned. Every ARG below is consumed above the `mamba env create` layer, so
+# a bump re-runs the conda solve as well as the tool's own install step.
+# DUCKDB_VERSION is shared by the CLI and the python wheel in /opt/mesa so
+# both use one extension cache (~/.duckdb/extensions/v<ver>/<platform>).
+# ---------------------------------------------------------------------------
+ARG GO_VERSION=1.27.1
+ARG TINI_VERSION=v0.19.0
+ARG TTYD_VERSION=1.7.7
+ARG GCM_VERSION=2.9.1
+ARG DUCKDB_VERSION=1.5.5
+ARG ANT_VERSION=1.31.0
+ARG CLAUDE_CODE_VERSION=2.1.263
+ARG CODEX_VERSION=0.153.4
+ARG CCR_VERSION=3.0.22
+ARG MCP_FILESYSTEM_VERSION=2026.8.31
+ARG OPENCODE_VERSION=1.18.29
+ARG GOOSE_VERSION=1.49.0
+
 # Add sudo to user
 ARG LOCAL_USER=jovyan
 
@@ -38,13 +60,13 @@ RUN apt-get update && \
     libglib2.0-0 libxext6 libsm6 libxrender1 \
     gettext-base git mercurial subversion \
     tmux curl grep sed dpkg && \
-    curl -L "https://github.com/krallin/tini/releases/download/v0.19.0/tini-${TARGETARCH}" > /usr/bin/tini && \
+    curl -L "https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${TARGETARCH}" > /usr/bin/tini && \
     chmod +x /usr/bin/tini && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Go
-RUN wget -q -c https://dl.google.com/go/go1.25.5.linux-${TARGETARCH}.tar.gz -O - | sudo tar -xz -C /usr/local
+RUN wget -q -c https://dl.google.com/go/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz -O - | sudo tar -xz -C /usr/local
 
 # Build the iRODS MCP server (stdio MCP access to the CyVerse Data Store)
 # https://github.com/idss-mesa/irods-mcp-server
@@ -57,7 +79,7 @@ RUN git clone --depth 1 https://github.com/idss-mesa/irods-mcp-server /tmp/irods
 
 # install ttyd
 RUN TTYD_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo aarch64 || echo x86_64) && \
-    curl -L "https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.${TTYD_ARCH}" > ttyd && \
+    curl -L "https://github.com/tsl0922/ttyd/releases/download/${TTYD_VERSION}/ttyd.${TTYD_ARCH}" > ttyd && \
     chmod a+x ttyd && \
     mv ttyd /usr/local/bin/ttyd
 
@@ -79,10 +101,10 @@ ENV PATH=${PATH}:/usr/games
 
 # install git-credential-manager
 RUN GCM_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) && \
-    wget https://github.com/git-ecosystem/git-credential-manager/releases/download/v2.7.3/gcm-linux-${GCM_ARCH}-2.7.3.deb && \
+    wget https://github.com/git-ecosystem/git-credential-manager/releases/download/v${GCM_VERSION}/gcm-linux-${GCM_ARCH}-${GCM_VERSION}.deb && \
     apt-get update && \
-    apt-get install -y ./gcm-linux-${GCM_ARCH}-2.7.3.deb && \
-    rm gcm-linux-${GCM_ARCH}-2.7.3.deb && \
+    apt-get install -y ./gcm-linux-${GCM_ARCH}-${GCM_VERSION}.deb && \
+    rm gcm-linux-${GCM_ARCH}-${GCM_VERSION}.deb && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -100,11 +122,33 @@ RUN AWS_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo aarch64 || echo x86_64) && \
     ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update && \
     rm -rf awscliv2.zip aws
 
+# DuckDB CLI (https://duckdb.org). Release assets are named by Go-style arch,
+# so TARGETARCH maps directly. The DuckLake extension is pre-installed below
+# (as jovyan) once the python wheel of the same version exists in /opt/mesa.
+RUN curl -fsSL "https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb_cli-linux-${TARGETARCH}.gz" \
+      | gunzip > /usr/local/bin/duckdb && \
+    chmod 755 /usr/local/bin/duckdb && \
+    duckdb -c "SELECT version();"
+
+# ant — Anthropic's CLI for the Claude Developer Platform (Messages API,
+# Managed Agents): https://github.com/anthropics/anthropic-cli
+# Static Go binary from the GitHub release, verified against the published
+# SHA-256 checksums. Auth is ANTHROPIC_API_KEY or `ant auth login`.
+RUN cd /tmp && \
+    curl -fsSLO "https://github.com/anthropics/anthropic-cli/releases/download/v${ANT_VERSION}/ant_${ANT_VERSION}_linux_${TARGETARCH}.tar.gz" && \
+    curl -fsSLO "https://github.com/anthropics/anthropic-cli/releases/download/v${ANT_VERSION}/ant_${ANT_VERSION}_checksums.txt" && \
+    sha256sum -c --ignore-missing "ant_${ANT_VERSION}_checksums.txt" && \
+    mkdir -p /tmp/ant && tar -xzf "ant_${ANT_VERSION}_linux_${TARGETARCH}.tar.gz" -C /tmp/ant && \
+    install -m 755 "$(find /tmp/ant -type f -name ant | head -1)" /usr/local/bin/ant && \
+    rm -rf /tmp/ant /tmp/ant_${ANT_VERSION}_* && \
+    ant --version
+
 # Install mesa-mcp and mesa-ducklake (https://github.com/idss-mesa)
 # into a dedicated venv: they need Python >=3.11 and the geospatial
 # conda env pins 3.10, so they get the base conda Python instead.
 RUN /opt/conda/bin/python3 -m venv /opt/mesa && \
     /opt/mesa/bin/pip install --no-cache-dir \
+      "duckdb==${DUCKDB_VERSION}" \
       git+https://github.com/idss-mesa/mesa-ducklake.git \
       git+https://github.com/idss-mesa/mesa-mcp.git && \
     ln -s /opt/mesa/bin/mesa-mcp /opt/mesa/bin/mesa-ducklake /usr/local/bin/
@@ -121,12 +165,20 @@ ENV GCM_CREDENTIAL_STORE=cache
 
 USER jovyan
 
-# Install Claude Code, OpenAI Codex, and Claude Code Router via npm
-# (npm install is preferred over claude.ai/install.sh for Docker builds)
-# ccr (claude-code-router) lets Claude Code talk to AI Verde's non-Anthropic
-# models; see aiverde-setup and https://github.com/musistudio/claude-code-router
+# Install Claude Code, OpenAI Codex, Claude Code Router, and the filesystem
+# MCP server via npm (npm install is preferred over claude.ai/install.sh for
+# Docker builds). ccr (claude-code-router) lets Claude Code talk to AI Verde's
+# non-Anthropic models; see aiverde-setup and
+# https://github.com/musistudio/claude-code-router
+# The filesystem MCP server is installed here (binary: mcp-server-filesystem)
+# instead of being fetched by `npx -y` at every agent start, so agents never
+# pull unpinned code from npm at runtime.
 RUN npm config set prefix /home/jovyan/.npm-global && \
-    npm install -g @anthropic-ai/claude-code @openai/codex @musistudio/claude-code-router && \
+    npm install -g \
+      "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \
+      "@openai/codex@${CODEX_VERSION}" \
+      "@musistudio/claude-code-router@${CCR_VERSION}" \
+      "@modelcontextprotocol/server-filesystem@${MCP_FILESYSTEM_VERSION}" && \
     npm cache clean --force
 
 # Install Antigravity CLI (replaces deprecated Google Gemini CLI — deadline June 18 2026)
@@ -136,14 +188,23 @@ RUN mkdir -p /home/jovyan/.cache/antigravity/staging && \
     curl -fsSL https://antigravity.google/cli/install.sh | bash
 
 # Install OpenCode (https://opencode.ai/) — --no-modify-path avoids shell detection hang in Docker
-RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
+RUN curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path --version "${OPENCODE_VERSION}"
 
-# Install Goose CLI (https://block.github.io/goose/) — headless install:
-# CONFIGURE=false skips the interactive setup wizard (required for Docker); the
-# binary lands in ~/.local/bin (already on PATH). Provider/key are wired at
-# runtime by aiverde-setup; MCP servers come from configs/goose-config.yaml.
+# Install Goose CLI (https://github.com/aaif-goose/goose, formerly block/goose;
+# docs https://block.github.io/goose/) — headless install. The installer script
+# is fetched from the same pinned release as the binary, not the floating
+# `stable` tag, so GOOSE_VERSION fixes both. CONFIGURE=false skips the
+# interactive setup wizard (required for Docker); the binary lands in
+# ~/.local/bin (already on PATH). Provider/key are wired at runtime by
+# aiverde-setup; MCP servers come from configs/goose-config.yaml.
 # bzip2/curl/ca-certificates (its only deps) are already installed above.
-RUN curl -fsSL https://github.com/block/goose/releases/download/stable/download_cli.sh | CONFIGURE=false bash
+RUN curl -fsSL "https://github.com/aaif-goose/goose/releases/download/v${GOOSE_VERSION}/download_cli.sh" | GOOSE_VERSION="v${GOOSE_VERSION}" CONFIGURE=false bash
+
+# Pre-install the DuckLake and httpfs DuckDB extensions into ~/.duckdb so
+# `ATTACH 'ducklake:...'` works without a network fetch, for both the CLI and
+# the python `duckdb` used by mesa-ducklake (same version => same cache dir).
+RUN duckdb -c "INSTALL ducklake; INSTALL httpfs; LOAD ducklake; LOAD httpfs;" && \
+    /opt/mesa/bin/python3 -c "import duckdb; c = duckdb.connect(); c.execute('LOAD ducklake'); print('python duckdb', duckdb.__version__, '+ ducklake OK')"
 
 # Configure bashrc
 RUN echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \

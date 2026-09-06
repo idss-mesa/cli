@@ -65,6 +65,6 @@ extensions:
     type: stdio
     name: filesystem
     enabled: true
-    cmd: npx
-    args: ["-y", "@modelcontextprotocol/server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"]
+    cmd: /home/jovyan/.npm-global/bin/mcp-server-filesystem
+    args: ["/home/jovyan/work", "/home/jovyan/data-store"]
     timeout: 300

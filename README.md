@@ -1,6 +1,6 @@
 # MESA CLI — CyVerse VICE Cloud Shell
 
-A browser-based terminal ([ttyd](https://github.com/tsl0922/ttyd) + `bash` inside `tmux`) for the **MESA** project, built to run as a [CyVerse Discovery Environment (VICE)](https://cyverse.org/discovery-environment) app. It bundles the MESA data-science stack, five AI coding-agent CLIs wired to CyVerse [AI Verde](https://aiverde-docs.cyverse.ai/) LLMs, MESA [MCP](https://modelcontextprotocol.io/) servers, and CyVerse Data Store tooling.
+A browser-based terminal ([ttyd](https://github.com/tsl0922/ttyd) + `bash` inside `tmux`) for the **MESA** project, built to run as a [CyVerse Discovery Environment (VICE)](https://cyverse.org/discovery-environment) app. It bundles the MESA data-science stack, six AI coding-agent CLIs (most of them wired to CyVerse [AI Verde](https://aiverde-docs.cyverse.ai/) LLMs), MESA [MCP](https://modelcontextprotocol.io/) servers, and CyVerse Data Store tooling.
 
 ![platforms](https://img.shields.io/badge/platforms-linux%2Famd64%20%7C%20linux%2Farm64-blue) ![registry](https://img.shields.io/badge/registry-harbor.cyverse.org%2Fvice%2Fmesa--cli-0a7bbb)
 
@@ -8,12 +8,12 @@ A browser-based terminal ([ttyd](https://github.com/tsl0922/ttyd) + `bash` insid
 
 | Category | Tools |
 | --- | --- |
-| **AI agent CLIs** | Claude Code (`claude`), OpenAI Codex (`codex`), OpenCode (`opencode`), Goose (`goose`), Antigravity (`agy`), Claude Code Router (`ccr`) |
+| **AI agent CLIs** | Claude Code (`claude`), OpenAI Codex (`codex`), OpenCode (`opencode`), Goose (`goose`), Antigravity (`agy`), Claude Code Router (`ccr`), Claude Platform CLI (`ant`, Messages API + Managed Agents) |
 | **MCP servers** | `irods` (CyVerse Data Store), `mesa` ([mesa-mcp](https://github.com/idss-mesa/mesa-mcp) + [mesa-ducklake](https://github.com/idss-mesa/mesa-ducklake)), `formation` ([formation-mcp](https://github.com/idss-mesa/formation-mcp), CyVerse DE), `filesystem` — pre-registered for every agent CLI |
 | **AI Verde** | `aiverde-setup` helper wires OpenCode, Goose + Claude Code (via `ccr`) to `https://llm-api.cyverse.ai` |
 | **CyVerse data** | GoCommands (`gocmd`), iRODS config, `s3fs`/OSN mounts (`osn-mount.sh`), AWS CLI |
-| **Dev** | GitHub CLI (`gh`), Git Credential Manager, Go 1.25, Node.js 22 |
-| **Science** | `geospatial` conda env (GDAL, PDAL, GeoPandas, NumPy/SciPy, …), MiniConda/Mamba |
+| **Dev** | GitHub CLI (`gh`), Git Credential Manager, Go 1.27, Node.js 22 |
+| **Science** | `geospatial` conda env (GDAL, PDAL, GeoPandas, NumPy/SciPy, …), MiniConda/Mamba, DuckDB CLI (`duckdb`) with the DuckLake + httpfs extensions pre-installed, `mesa-ducklake` |
 
 Base image: `quay.io/jupyter/minimal-notebook` (Ubuntu 24.04, user `jovyan`). Terminal on port **7681**; working dir `/home/jovyan/data-store`.
 
@@ -70,6 +70,7 @@ It validates the key against `/v1/models`, lists your models, and writes `~/.con
 - **OpenCode** — uses the `aiverde` provider directly.
 - **Goose** — uses the `openai` provider pointed at AI Verde (`goose`).
 - **Claude Code** — uses `ccr` for non-Anthropic models (`ccr code`), or the native `ANTHROPIC_BASE_URL` env path if your course serves Anthropic models.
+- **`ant`** (Claude Platform CLI) — *not* configured by `aiverde-setup`; it uses your own Anthropic credentials (`ANTHROPIC_API_KEY` or `ant auth login`). Note that when your course serves Anthropic models, `aiverde-setup` exports an AI Verde key as `ANTHROPIC_API_KEY`; `ant` documents no base-URL override, so set your own key explicitly before running it.
 - **Codex** — *not* wired to AI Verde: Codex dropped Chat Completions support and AI Verde does not serve the Responses API. It runs on its own OpenAI auth.
 
 ## Build
@@ -89,6 +90,18 @@ docker buildx build --platform linux/amd64 -t harbor.cyverse.org/vice/mesa-cli:l
 > docker run --privileged --rm tonistiigi/binfmt:latest --install amd64
 > ```
 > The emulated conda solve then succeeds but is slow (~40 min). Prefer a native x86 host or CI for amd64. The Dockerfile copies all config/asset files *after* the conda layer, so editing configs rebuilds in seconds without re-solving conda.
+
+### Tool versions
+
+The agent CLIs (except Antigravity) and most downloaded binaries are pinned by an `ARG` at the top of `bash/Dockerfile`: Claude Code, Codex, `ccr`, OpenCode, Goose, `ant`, DuckDB, Go, ttyd, tini, GCM, and the filesystem MCP server. Bump the defaults there to update, or override one for a single build:
+
+```bash
+docker buildx build --build-arg CLAUDE_CODE_VERSION=<version> --platform linux/arm64 -t harbor.cyverse.org/vice/mesa-cli:arm64 --load bash/
+```
+
+Not pinned: Antigravity (`agy`) and GoCommands (their installers have no version option), the AWS CLI (the zip is always the current release), Node.js (NodeSource `setup_22.x` tracks the newest 22.x), and the base image (`quay.io/jupyter/minimal-notebook:latest`).
+
+All version `ARG`s are consumed above the `mamba env create` layer, so bumping any of them re-runs the conda solve as well as the tool's own install step (minutes natively, ~40 min emulated). Only edits to `bash/configs/`, the scripts, and the splash rebuild in seconds.
 
 ## Layout
 
