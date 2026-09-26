@@ -3,6 +3,15 @@ name: harbor
 on:
   push:
     branches: main
+    # GPU-variant and docs-only changes do not touch the CPU image (bash/), so
+    # they must not rebuild and republish :latest/:arm64 underneath a :gpu
+    # build that layers on :latest (see README "GPU variant").
+    paths-ignore:
+      - 'gpu/**'
+      - '.github/workflows/harbor-gpu.yml'
+      - 'Makefile'
+      - 'README.md'
+      - '.gitignore'
   schedule:
     # Weekly rebuild (Sunday 00:00 UTC) to pick up upstream package/CLI updates.
     - cron: '0 0 * * 0'

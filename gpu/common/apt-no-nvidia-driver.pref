@@ -1,0 +1,13 @@
+# /etc/apt/preferences.d/mesa-no-nvidia-driver — MESA GPU images.
+# Shared file: keep identical in the five idss-mesa GPU image repos.
+#
+# The NVIDIA container runtime injects the HOST driver's user-space libraries
+# (libcuda, NVML, nvidia-smi, GL). Installing driver packages inside the
+# container shadows them and breaks nvidia-smi/NVML with a "Driver/library
+# version mismatch" (on Ubuntu 24.04 even `nvidia-driver-535` pulls the R580
+# user space). This pin makes apt refuse them; the CUDA *toolkit* packages
+# (cuda-toolkit-12-x, cuda-nvcc-12-x, libcudnn9-*) stay installable.
+# Remove this file only if you really know you need them.
+Package: nvidia-driver-* nvidia-dkms-* nvidia-kernel-* nvidia-utils-* nvidia-compute-utils-* xserver-xorg-video-nvidia-* nvidia-firmware-* libnvidia-compute-* libnvidia-gl-* libnvidia-decode-* libnvidia-encode-* libnvidia-extra-* libnvidia-fbc1-* libnvidia-cfg1-* libnvidia-common-* cuda-drivers cuda-drivers-*
+Pin: release *
+Pin-Priority: -1

@@ -1,0 +1,3 @@
+# Python bytecode (e.g. from running gpu/pip-guard.py locally)
+__pycache__/
+*.pyc

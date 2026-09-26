@@ -1,0 +1,50 @@
+{
+  "tools": [
+    {
+      "name": "mesa-cli-gpu",
+      "version": "1.0.0",
+      "description": "MESA CLI (NVIDIA GPU): browser terminal (ttyd + tmux) with the MESA agent CLIs and MCP servers, CUDA PyTorch in the conda base env, and Ollama for local LLMs on the GPU. Requires 1 NVIDIA A16 GPU.",
+      "type": "interactive",
+      "interactive": true,
+      "restricted": false,
+      "implementation": {
+        "implementor": "MESA / CyVerse",
+        "implementor_email": "<email>",
+        "test": {
+          "input_files": [],
+          "output_files": []
+        }
+      },
+      "container": {
+        "image": {
+          "name": "harbor.cyverse.org/vice/mesa-cli",
+          "tag": "gpu"
+        },
+        "network_mode": "bridge",
+        "working_directory": "/home/jovyan/data-store",
+        "uid": 1000,
+        "skip_tmp_mount": true,
+        "pids_limit": 1024,
+        "min_cpu_cores": 4,
+        "max_cpu_cores": 8,
+        "min_memory_limit": 17179869184,
+        "memory_limit": 34359738368,
+        "min_gpus": 1,
+        "max_gpus": 1,
+        "gpu_models": ["NVIDIA-A16"],
+        "container_ports": [
+          { "container_port": 7681 }
+        ],
+        "container_devices": [
+          { "host_path": "/dev/shm", "container_path": "4Gi" }
+        ],
+        "interactive_apps": {
+          "name": "cas-proxy",
+          "image": "discoenv/cas-proxy",
+          "cas_url": "https://olson.cyverse.org/cas",
+          "cas_validate": "validate"
+        }
+      }
+    }
+  ]
+}

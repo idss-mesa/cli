@@ -1,0 +1,8 @@
+# Build context is gpu/: keep the test harness, DE tool spec, repo metadata and editor cruft out of it.
+test-gpu.sh
+de-tool.json
+**/*.md
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+**/*.swp
