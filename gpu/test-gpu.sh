@@ -378,6 +378,14 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+hdr "T6 MESA MCP stack"
+# MESA MCP stack: /opt/mesa imports mesa-mcp + mesa-ducklake on DuckDB 2.x (catalogs it writes are DuckDB 2-only)
+out=$(docker run --rm --entrypoint /opt/mesa/bin/python "$IMAGE" -c "import duckdb, mesa_mcp, mesa_ducklake; from importlib.metadata import version as v; assert duckdb.__version__.startswith('2.'), 'duckdb ' + duckdb.__version__; print('mesa-mcp', v('mesa-mcp'), 'mesa-ducklake', v('mesa-ducklake'), 'duckdb', duckdb.__version__)" 2>&1)
+rc=$?
+printf '%s\n' "$out"
+result "T6 mesa-mcp DuckDB 2" "$rc" "$(printf '%s' "$out" | tail -1)"
+
+# ---------------------------------------------------------------------------
 hdr "Results ($IMAGE, GPU=$GPU)"
 printf '%s\n' "${RESULTS[@]}"
 if [ "$FAILED" -eq 0 ]; then

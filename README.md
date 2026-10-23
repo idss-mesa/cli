@@ -9,7 +9,7 @@ A browser-based terminal ([ttyd](https://github.com/tsl0922/ttyd) + `bash` insid
 | Category | Tools |
 | --- | --- |
 | **AI agent CLIs** | Claude Code (`claude`), OpenAI Codex (`codex`), OpenCode (`opencode`), Goose (`goose`), Antigravity (`agy`), Claude Code Router (`ccr`) |
-| **MCP servers** | `irods` (CyVerse Data Store), `mesa` ([mesa-mcp](https://github.com/idss-mesa/mesa-mcp) + [mesa-ducklake](https://github.com/idss-mesa/mesa-ducklake)), `formation` ([formation-mcp](https://github.com/idss-mesa/formation-mcp), CyVerse DE), `filesystem` — pre-registered for every agent CLI |
+| **MCP servers** | `irods` (CyVerse Data Store), `mesa` ([mesa-mcp](https://github.com/idss-mesa/mesa-mcp) + [mesa-ducklake](https://github.com/idss-mesa/mesa-ducklake), pinned to `v0.2.0` on DuckDB 2.0: catalog files it creates cannot be opened by DuckDB 1.x), `formation` ([formation-mcp](https://github.com/idss-mesa/formation-mcp), CyVerse DE), `filesystem` — pre-registered for every agent CLI |
 | **AI Verde** | `aiverde-setup` helper wires OpenCode, Goose + Claude Code (via `ccr`) to `https://llm-api.cyverse.ai` |
 | **CyVerse data** | GoCommands (`gocmd`), iRODS config, `s3fs`/OSN mounts (`osn-mount.sh`), AWS CLI |
 | **Dev** | GitHub CLI (`gh`), Git Credential Manager, Go 1.25, Node.js 22 |
@@ -24,6 +24,27 @@ docker run --rm -p 7681:7681 harbor.cyverse.org/vice/mesa-cli:latest
 ```
 
 Then open <http://localhost:7681>. `:latest` is `linux/amd64` (cloud servers); `:arm64` is the native Apple Silicon build.
+
+## DE tool settings
+
+These live in the Discovery Environment, not in this repo, and must match the image. Change them only together with the Dockerfile.
+
+| Setting | Value |
+| --- | --- |
+| DE app | **MESA Cloud Shell** (`34050904-86f9-11f1-beaf-008cfa5ae3e1`) |
+| DE tool (version `1.1.0`) | `mesa-cli` (`2e106bb0-86f9-11f1-a992-008cfa5ae3e1`) |
+| Image | `harbor.cyverse.org/vice/mesa-cli:latest` |
+| Type | interactive |
+| Network mode | `bridge` (Terrain's default `none` gives an analysis that runs but never serves) |
+| Skip /tmp mount | `true` |
+| VICE proxy | `interactive_apps` = cas-proxy (`discoenv/cas-proxy`) |
+| Container port | **7681** (ttyd) |
+| Working directory | `/home/jovyan/data-store` (the Data Store CSI mount point) |
+| UID | 1000 |
+| PIDs limit | 1024 |
+| Entrypoint override | none (the image's own startup script does the MESA per-user setup) |
+| Max CPU | 32 cores |
+| Memory limit | 128 GiB |
 
 ## Sign in to CyVerse
 
@@ -167,7 +188,8 @@ The DE app is a copy of the CPU app pointing at a separate GPU tool. [`gpu/de-to
 
 | Setting | Value |
 | --- | --- |
-| DE tool | `mesa-cli-gpu` (version `1.0.0`) |
+| DE app | **MESA Cloud Shell (GPU)** (`6ac0f7c4-ba88-11f1-a02a-008cfa5ae3e1`, private) |
+| DE tool (version `1.1.0`) | `mesa-cli-gpu` (`2b026a00-ba88-11f1-82ec-008cfa5ae3e1`) |
 | Image | `harbor.cyverse.org/vice/mesa-cli:gpu` |
 | Type | interactive |
 | Container port | **7681** |
