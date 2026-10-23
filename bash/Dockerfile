@@ -64,7 +64,7 @@ RUN TTYD_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo aarch64 || echo x86_64) && \
 # Install remaining packages: locales, terminal tools, s3fs, Node/NPM
 RUN apt-get update && \
     curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y locales lolcat neofetch figlet w3m-img imagemagick s3fs fuse nodejs socat bubblewrap && \
+    apt-get install -y locales lolcat fastfetch figlet w3m-img imagemagick s3fs fuse nodejs socat bubblewrap && \
     locale-gen en_US.UTF-8 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -103,10 +103,17 @@ RUN AWS_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo aarch64 || echo x86_64) && \
 # Install mesa-mcp and mesa-ducklake (https://github.com/idss-mesa)
 # into a dedicated venv: they need Python >=3.11 and the geospatial
 # conda env pins 3.10, so they get the base conda Python instead.
+# Pinned to release tags: DuckDB 2.0 (mesa-ducklake >= 0.2) writes catalogs
+# DuckDB 1.x cannot open, and a changed ref also invalidates this layer's cache.
+# The [ducklake] extra enforces mesa-mcp's mesa-ducklake>=0.2 floor; the
+# assertion fails the build if the venv Python or DuckDB is too old.
+ARG MESA_DUCKLAKE_REF=v0.2.0
+ARG MESA_MCP_REF=v0.2.0
 RUN /opt/conda/bin/python3 -m venv /opt/mesa && \
     /opt/mesa/bin/pip install --no-cache-dir \
-      git+https://github.com/idss-mesa/mesa-ducklake.git \
-      git+https://github.com/idss-mesa/mesa-mcp.git && \
+      "mesa-ducklake @ git+https://github.com/idss-mesa/mesa-ducklake@${MESA_DUCKLAKE_REF}" \
+      "mesa-mcp[ducklake] @ git+https://github.com/idss-mesa/mesa-mcp@${MESA_MCP_REF}" && \
+    /opt/mesa/bin/python -c "import sys, duckdb; from importlib.metadata import version as v; assert sys.version_info >= (3, 11), sys.version; assert duckdb.__version__.startswith('2.'), duckdb.__version__; print('mesa-mcp', v('mesa-mcp'), 'mesa-ducklake', v('mesa-ducklake'), 'duckdb', duckdb.__version__)" && \
     ln -s /opt/mesa/bin/mesa-mcp /opt/mesa/bin/mesa-ducklake /usr/local/bin/
 
 # Configure FUSE for non-root users and create OSN directory
