@@ -116,6 +116,18 @@ RUN /opt/conda/bin/python3 -m venv /opt/mesa && \
     /opt/mesa/bin/python -c "import sys, duckdb; from importlib.metadata import version as v; assert sys.version_info >= (3, 11), sys.version; assert duckdb.__version__.startswith('2.'), duckdb.__version__; print('mesa-mcp', v('mesa-mcp'), 'mesa-ducklake', v('mesa-ducklake'), 'duckdb', duckdb.__version__)" && \
     ln -s /opt/mesa/bin/mesa-mcp /opt/mesa/bin/mesa-ducklake /usr/local/bin/
 
+# DuckDB 2.0 for users: the `duckdb` CLI on PATH and duckdb in the base conda Python.
+# Same major as /opt/mesa, so catalogs mesa-ducklake writes (DuckDB 2-only)
+# open here too.
+ARG DUCKDB_VERSION=2.0.0
+RUN DUCKDB_ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo amd64) && \
+    curl -fsSL "https://github.com/duckdb/duckdb/releases/download/v${DUCKDB_VERSION}/duckdb-cli-linux-${DUCKDB_ARCH}.tar.gz" | \
+        tar -xz -C /usr/local/bin duckdb && \
+    duckdb --version | grep "^v${DUCKDB_VERSION} " && \
+    /opt/conda/bin/pip install --no-cache-dir "duckdb==${DUCKDB_VERSION}" && \
+    chown -R "$(stat -c %u:%g /opt/conda)" /opt/conda/lib/python3*/site-packages/duckdb* && \
+    /opt/conda/bin/python -c "import duckdb; assert duckdb.__version__ == '${DUCKDB_VERSION}', duckdb.__version__"
+
 # Configure FUSE for non-root users and create OSN directory
 RUN echo "user_allow_other" >> /etc/fuse.conf && \
     chmod 644 /etc/fuse.conf && \
