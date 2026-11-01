@@ -102,7 +102,7 @@ It validates the key against `/v1/models`, lists your models, and writes `~/.con
 | --- | --- |
 | **PyTorch** | `torch` 2.14 + `torchvision` 0.29, CUDA 12.6 build, in the conda **base** env (Python 3.13) — the terminal's default `python` |
 | **ML** | `transformers`, `accelerate`, `huggingface_hub` (`hf` CLI) |
-| **Local LLMs** | [Ollama](https://ollama.com) 0.34.4, started in the background on `127.0.0.1:11434`; `ollama-setup`; `ollama` Python client. OpenCode gets an `ollama` provider, Codex `oss_provider = "ollama"` |
+| **Local LLMs** | [Ollama](https://ollama.com) 0.40.11, started in the background on `127.0.0.1:11434`; `ollama-setup`; `ollama` Python client. OpenCode gets an `ollama` provider, Codex `oss_provider = "ollama"` |
 | **GPU tools** | `mesa-gpu-check`, `nvtop`, `nvitop`; `gcc` so `torch.compile` (Triton) works |
 | **CUDA** | `cuda-compat-13-4` forward-compat driver (used only on pre-R580 hosts, see below). No NVIDIA driver is baked in (the container runtime injects the host's), and an apt pin keeps it that way |
 
@@ -163,7 +163,7 @@ It exits non-zero with `no NVIDIA GPU in this container` when the app was launch
 ### CUDA and driver compatibility
 
 - **PyTorch** (cu126) runs on any driver ≥ R525 — T4, A16, A100 — with nothing extra.
-- **Ollama 0.34.4** needs R550+ for its CUDA 12 runner and R580+ for CUDA 13; other CUDA 13 software needs R580+. On pre-R580 drivers (e.g. R535), `/etc/profile.d/mesa-gpu-env.sh` (run by the entrypoint, again by `ollama serve`, and from `/etc/bash.bashrc` for `docker exec`/`kubectl exec` shells) puts NVIDIA's forward-compat driver `$MESA_CUDA_COMPAT_DIR` (`/usr/local/cuda-13.4/compat`) first on `LD_LIBRARY_PATH` — only when the host's CUDA API is < 13 **and** `cuInit` succeeds with it (data-center GPUs only). R580+ hosts are left alone. `MESA_DISABLE_CUDA_COMPAT=1` opts out.
+- **Ollama 0.40.11** needs R550+ for its CUDA 12 runner and R580+ for CUDA 13; other CUDA 13 software needs R580+. On pre-R580 drivers (e.g. R535), `/etc/profile.d/mesa-gpu-env.sh` (run by the entrypoint, again by `ollama serve`, and from `/etc/bash.bashrc` for `docker exec`/`kubectl exec` shells) puts NVIDIA's forward-compat driver `$MESA_CUDA_COMPAT_DIR` (`/usr/local/cuda-13.4/compat`) first on `LD_LIBRARY_PATH` — only when the host's CUDA API is < 13 **and** `cuInit` succeeds with it (data-center GPUs only). R580+ hosts are left alone. `MESA_DISABLE_CUDA_COMPAT=1` opts out.
 - **Switches are read at container start.** `MESA_OLLAMA_AUTOSTART` and `MESA_DISABLE_CUDA_COMPAT` are read by the entrypoint before the terminal starts, so exporting them in a shell or a `~/.env`-style file changes nothing. On VICE set them as environment variables of the DE app; locally `docker run -e MESA_OLLAMA_AUTOSTART=0 ...`.
 - **No driver packages.** `/etc/apt/preferences.d/mesa-no-nvidia-driver` pins `nvidia-driver-*`, `libnvidia-*`, `nvidia-utils-*`, `cuda-drivers` and friends to priority -1, so `sudo apt install` cannot pull a driver userspace that would shadow the injected host driver (`nvidia-smi`: *Driver/library version mismatch*). CUDA toolkit packages (`cuda-toolkit-12-x`, `cuda-nvcc-12-x`) still install. To install a driver package on purpose, `sudo rm` that file first.
 - The image sets `NVIDIA_DRIVER_CAPABILITIES=compute,utility` and deliberately not `NVIDIA_VISIBLE_DEVICES` (the DE's device plugin / `docker --gpus` set it).
@@ -249,3 +249,30 @@ docs/
 
 - [CyVerse VICE apps](https://learning.cyverse.org/vice/) · [GoCommands](https://learning.cyverse.org/ds/gocommands/) · [AI Verde](https://aiverde-docs.cyverse.ai/)
 - MESA org: <https://github.com/idss-mesa>
+
+## AI Sandbox variants (`:sandbox`, `:gpu-sandbox`)
+
+The `:latest` and `:gpu` images keep passwordless `sudo` on purpose: VICE lets a
+human modify the environment they are working in. The **AI Sandbox** variants
+(`sandbox/Dockerfile`) are the same images with every path from UID 1000 to root
+removed, for sessions driven by AI agents (Claude Code, Codex, OpenCode, Goose,
+Antigravity):
+
+- `sudo` purged (package, `/etc/sudoers*`, group memberships); `su`/`pkexec` cannot switch user
+- no setuid/setgid binaries and no file capabilities anywhere in the image
+- every account password locked, `/etc/passwd` and `/etc/group` not group-writable, no world-writable system files
+- `MESA_SANDBOX=1` in every shell and a marker at `/etc/mesa/sandbox`
+
+Build, test and push (the sandbox layers on the **published** base, so pull or
+build `:latest`/`:gpu` first):
+
+```bash
+make build-sandbox test-sandbox push-sandbox             # :sandbox      <- :latest
+make build-gpu-sandbox test-gpu-sandbox push-gpu-sandbox # :gpu-sandbox  <- :gpu
+```
+
+`sandbox/test-sandbox.sh` starts the image as VICE does (UID 1000) and fails if
+`sudo`, a setuid file, a file capability, a root process or a writable `/etc`
+is found, or if the app does not answer. `harbor-sandbox.yml` is the manual
+GitHub workflow equivalent. Register each sandbox tag as its own DE tool
+(same spec as the base tool).
