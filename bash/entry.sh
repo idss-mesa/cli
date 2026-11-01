@@ -13,15 +13,12 @@ if [ -f /data-store/iplant/home/$IPLANT_USER/.gitconfig ]; then
   cp /data-store/iplant/home/$IPLANT_USER/.gitconfig ~/
 fi
 
-# Copy S3 AWS (if it exists)
-if [ -d /data-store/iplant/home/$IPLANT_USER/.aws ]; then
-  cp -r /data-store/iplant/home/$IPLANT_USER/.aws ~/
-fi
-
-# Copy SSH keys (if it exists)
-if [ -d /data-store/iplant/home/$IPLANT_USER/.ssh ]; then
-  cp -r /data-store/iplant/home/$IPLANT_USER/.ssh ~/
-fi
+# ~/.aws and ~/.ssh are deliberately NOT copied from the Data Store any more
+# (2026-10 security review): every agent CLI in this image runs with the
+# user's full shell, so long-lived cloud and SSH secrets in the container home
+# are one prompt injection away from exfiltration. Bring credentials for a
+# session explicitly (cyverse-login, aiverde-setup, `osn-mount.sh`), or via the
+# planned OpenBao integration (idss-mesa workspace: docs/openbao-credentials-proposal.md).
 
 # Mount S3 buckets from AWS config if credentials exist
 if [ -f "$HOME/.aws/credentials" ] && [ -f "$HOME/.aws/config" ]; then
