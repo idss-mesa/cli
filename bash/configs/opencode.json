@@ -47,7 +47,7 @@
     },
     "filesystem": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"],
+      "command": ["/home/jovyan/.npm-global/bin/mcp-server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"],
       "enabled": true
     }
   }
