@@ -28,8 +28,8 @@
     },
     "filesystem": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/jovyan/work", "/home/jovyan/data-store"],
+      "command": "/home/jovyan/.npm-global/bin/mcp-server-filesystem",
+      "args": ["/home/jovyan/work", "/home/jovyan/data-store"],
       "env": {}
     }
   }

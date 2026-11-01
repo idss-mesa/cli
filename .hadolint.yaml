@@ -1,0 +1,13 @@
+# hadolint config for the mesa-jupyterlab VICE image.
+# Start permissive, tighten over time. Docs: https://github.com/hadolint/hadolint
+failure-threshold: warning
+ignored:
+  - DL3008  # pin apt versions — VICE images intentionally track latest base packages
+  - DL3013  # pin pip versions — same rationale
+  - DL3016  # pin npm versions — agent CLIs (claude/codex/ccr) intentionally track latest
+  - DL4006  # set -o pipefail before pipes — noisy on simple RUN lines
+trustedRegistries:
+  - harbor.cyverse.org
+  - quay.io
+  - ghcr.io
+  - docker.io
