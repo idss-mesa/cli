@@ -1,0 +1,101 @@
+# Image security scanning for the mesa-cli CyVerse VICE image.
+# hadolint lints the Dockerfiles (CPU bash/ and GPU gpu/) on every PR; trivy
+# scans the published Harbor images (:latest and :gpu) weekly + on demand (not
+# rebuilt per PR). Report-only by default.
+name: security
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # 6h after harbor.yml's weekly rebuild so trivy scans the fresh image
+    - cron: '0 6 * * 0'
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Lint Dockerfile (hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: bash/Dockerfile
+          config: .hadolint.yaml
+          failure-threshold: warning
+          no-fail: true            # report-only — set false to gate the PR
+      - name: Lint GPU Dockerfile (hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: gpu/Dockerfile
+          config: .hadolint.yaml
+          failure-threshold: warning
+          no-fail: true            # report-only — set false to gate the PR
+
+  scan:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: [latest, gpu, sandbox, gpu-sandbox]   # CPU, GPU, and the two AI Sandbox variants (sandbox/)
+    steps:
+      - uses: actions/checkout@v5  # needed so .trivyignore is honored
+      - name: Log in to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: harbor.cyverse.org
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+      # :gpu, :sandbox and :gpu-sandbox are pushed by hand (make push-gpu /
+      # push-sandbox) or by the manual workflows; until they exist, skip their
+      # scan with a warning instead of failing weekly. A missing :latest still
+      # fails the job.
+      - name: Check the image is published
+        id: published
+        env:
+          IMAGE: harbor.cyverse.org/vice/mesa-cli:${{ matrix.tag }}
+          TAG: ${{ matrix.tag }}
+        run: |
+          if docker buildx imagetools inspect "$IMAGE" >/dev/null; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          elif [ "$TAG" != latest ]; then
+            echo "::warning::$IMAGE is not published yet (make push-gpu / push-sandbox); skipping its scan"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            exit 1
+          fi
+      # trivy unpacks the image locally; the :gpu variant (~23 GB) needs more
+      # than the runner's default free disk
+      - name: Free disk space
+        if: steps.published.outputs.found == 'true'
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+      - name: Scan published image for CVEs (trivy)
+        if: steps.published.outputs.found == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0; SHA-pinned: tags were rewritten in the 2026-03 trivy-action compromise
+        with:
+          image-ref: harbor.cyverse.org/vice/mesa-cli:${{ matrix.tag }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '0'           # report-only — set '1' to gate on fixable findings
+        env:
+          TRIVY_TIMEOUT: 30m
+      - name: Upload results to the GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always() && steps.published.outputs.found == 'true'
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-${{ matrix.tag }}

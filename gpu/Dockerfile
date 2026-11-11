@@ -121,8 +121,8 @@ RUN curl -fsSL -o /tmp/cuda-keyring.deb https://developer.download.nvidia.com/co
 # nvidia-smi at build time it bakes the cuda-drivers userspace into the image).
 # The real binary is ollama.bin; /usr/local/bin/ollama is the compat wrapper.
 # Last of the heavy layers: bumping OLLAMA_* re-runs only this 2.2 GB layer.
-ARG OLLAMA_VERSION=0.34.4
-ARG OLLAMA_SHA256=c238986e61d40c0cc5f4a9b9e40b9eea104350b77efa34741fc134e105cb9533
+ARG OLLAMA_VERSION=0.40.11
+ARG OLLAMA_SHA256=7bedab90dd122661be78798e9f0edf37fccf0cccf2699d2c58ea1a3afdc04b6d
 RUN curl -fsSL -o /tmp/ollama.tar.zst "https://github.com/ollama/ollama/releases/download/v${OLLAMA_VERSION}/ollama-linux-amd64.tar.zst" && \
     echo "${OLLAMA_SHA256}  /tmp/ollama.tar.zst" | sha256sum -c - && \
     zstd -dc /tmp/ollama.tar.zst | tar -xf - -C /usr/local && rm -f /tmp/ollama.tar.zst && \

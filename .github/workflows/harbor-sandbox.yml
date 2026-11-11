@@ -1,0 +1,74 @@
+name: harbor-sandbox
+
+# AI Sandbox variants (sandbox/Dockerfile): the published :latest or :gpu image
+# with sudo and every privilege-escalation path removed. Manual: pick the base
+# tag (latest -> :sandbox, gpu -> :gpu-sandbox). Normally run from a build host
+# with `make build-sandbox test-sandbox push-sandbox` (and the gpu- variants).
+on:
+  workflow_dispatch:
+    inputs:
+      base_tag:
+        description: 'Image tag to lock down (latest or gpu)'
+        required: false
+        default: 'latest'
+        type: choice
+        options: [latest, gpu]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Harbor
+        uses: docker/login-action@v3
+        with:
+          registry: harbor.cyverse.org
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      # Pin the exact base image the sandbox layer is built on (recorded in the log)
+      - name: Resolve base image digest
+        id: base
+        env:
+          BASE_TAG: ${{ inputs.base_tag || 'latest' }}
+        run: |
+          digest=$(docker buildx imagetools inspect "harbor.cyverse.org/vice/mesa-cli:${BASE_TAG}" --format '{{json .Manifest.Digest}}' | tr -d '"')
+          case "$digest" in sha256:*) ;; *) echo "could not resolve harbor.cyverse.org/vice/mesa-cli:${BASE_TAG}" >&2; exit 1 ;; esac
+          echo "ref=harbor.cyverse.org/vice/mesa-cli@${digest}" >> "$GITHUB_OUTPUT"
+          if [ "$BASE_TAG" = gpu ]; then echo "tag=gpu-sandbox" >> "$GITHUB_OUTPUT"; else echo "tag=sandbox" >> "$GITHUB_OUTPUT"; fi
+
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v6
+        with:
+          context: sandbox
+          file: sandbox/Dockerfile
+          builder: ${{ steps.buildx.outputs.name }}
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            BASE_IMAGE=${{ steps.base.outputs.ref }}
+          tags: harbor.cyverse.org/vice/mesa-cli:${{ steps.base.outputs.tag }}
+
+      - name: Image digest
+        env:
+          DIGEST: ${{ steps.docker_build.outputs.digest }}
+          BASE_REF: ${{ steps.base.outputs.ref }}
+        run: echo "${DIGEST} (base ${BASE_REF})"
