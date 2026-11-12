@@ -148,6 +148,7 @@ chk "torch/site-packages owned by jovyan" '[ "$(stat -c %U /opt/conda/lib/python
 chk "ollama wrapper first on PATH" '[ "$(command -v ollama)" = /usr/local/bin/ollama ] && [ -x /usr/local/bin/ollama.bin ]'
 missing=$(for c in nvtop nvitop hf cuda-probe mesa-gpu-check ollama-setup; do command -v "$c" >/dev/null || printf '%s ' "$c"; done)
 chk "GPU CLIs present (nvtop nvitop hf cuda-probe mesa-gpu-check ollama-setup)${missing:+ - missing: $missing}" '[ -z "$missing" ]'
+chk "nvtop starts (Ubuntu 26.04 ships it with a file capability containers lack)" 'nvtop --version'
 chk "forward-compat driver at \$MESA_CUDA_COMPAT_DIR ($MESA_CUDA_COMPAT_DIR)" '[ -e "$MESA_CUDA_COMPAT_DIR/libcuda.so.1" ]'
 chk "OpenCode has the ollama provider" '/opt/conda/bin/python -c "import json,sys; sys.exit(\"ollama\" not in json.load(open(\"/home/jovyan/.config/opencode/opencode.json\"))[\"provider\"])"'
 chk "Codex oss_provider = ollama" 'grep -qx "oss_provider = \"ollama\"" /home/jovyan/.codex/config.toml'
