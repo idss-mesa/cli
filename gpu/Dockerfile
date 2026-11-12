@@ -45,8 +45,14 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Triton (torch.compile) builds a small C launcher on first use and the CPU
 # image ships no C compiler. The NVIDIA repo comes with cuda-compat below,
 # whose driver guard also covers this layer.
+# Ubuntu 26.04 packages nvtop with the file capability cap_perfmon. A container
+# does not have that capability in its bounding set, so the kernel refuses to
+# start the binary at all ("Operation not permitted"). Monitoring NVIDIA GPUs
+# does not need it: reinstalling the file drops the capability, and the
+# version check fails the build if nvtop still cannot start.
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl zstd nvtop gcc libc6-dev && \
+    install -m 0755 /usr/bin/nvtop /usr/bin/nvtop.nocap && mv -f /usr/bin/nvtop.nocap /usr/bin/nvtop && nvtop --version && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------------------
