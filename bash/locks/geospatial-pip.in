@@ -1,0 +1,5 @@
+# Security floors inside the geospatial conda env (Python 3.10), where
+# conda-forge lags the fixed releases (Trivy, 2026-10).
+urllib3>=2.8
+Brotli>=1.2.1
+tornado>=6.5.9

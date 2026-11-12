@@ -1,0 +1,16 @@
+# Lock files that make up each image variant. Columns (tab separated), see
+# ci/README.md:
+# kind	layer	arch	file	prefix
+base	cpu	*	bash/Dockerfile	-
+pins	cpu	*	ci/pins.tsv	-
+pip	cpu	amd64	bash/locks/mesa-venv.amd64.txt	/opt/mesa
+pip	cpu	arm64	bash/locks/mesa-venv.arm64.txt	/opt/mesa
+pip	cpu	amd64	bash/locks/base-pip.amd64.txt	/opt/conda
+pip	cpu	arm64	bash/locks/base-pip.arm64.txt	/opt/conda
+conda	cpu	amd64	bash/locks/geospatial.amd64.lock	/opt/conda/envs/geospatial
+conda	cpu	arm64	bash/locks/geospatial.arm64.lock	/opt/conda/envs/geospatial
+pip	cpu	amd64	bash/locks/geospatial-pip.amd64.txt	/opt/conda/envs/geospatial
+pip	cpu	arm64	bash/locks/geospatial-pip.arm64.txt	/opt/conda/envs/geospatial
+npm	cpu	*	bash/locks/npm/package-lock.json	/home/jovyan/.npm-global/lib
+base	gpu	*	gpu/Dockerfile	-
+pip	gpu	amd64	gpu/locks/gpu-pip.amd64.txt	/opt/conda

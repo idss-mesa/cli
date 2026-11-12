@@ -1,0 +1,4 @@
+# /opt/mesa venv (Python of the base image): mesa-mcp + mesa-ducklake, from
+# the wheels attached to their GitHub releases (neither is on PyPI).
+mesa-ducklake @ https://github.com/idss-mesa/mesa-ducklake/releases/download/v0.2.0/mesa_ducklake-0.2.0-py3-none-any.whl
+mesa-mcp[ducklake] @ https://github.com/idss-mesa/mesa-mcp/releases/download/v0.2.0/mesa_mcp-0.2.0-py3-none-any.whl

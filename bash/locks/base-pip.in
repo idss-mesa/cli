@@ -1,0 +1,6 @@
+# Installed into the base image's /opt/conda Python: DuckDB 2 for users, and
+# security floors for packages the base image ships (Trivy, 2026-10).
+duckdb==2.0.0
+certifi>=2026.10.19
+urllib3>=2.8
+msgpack>=1.2.1
