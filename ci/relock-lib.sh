@@ -1,8 +1,8 @@
 # shellcheck shell=bash
 # Helpers for a repo's ./relock.sh: each regenerates one kind of lock file
 # from its intent file. Sourced, not executed. Needs docker, uv and crane on
-# PATH (ci/install-tools.sh); npm is taken from PATH or from the official
-# Node image.
+# PATH; npm runs from the official Node image at the version the Dockerfile
+# pins.
 #
 # Everything is written in place; `git diff` afterwards is the change set.
 
@@ -121,12 +121,9 @@ PY
 npm_lock() {
   local dir=$1 node_version=$2
   rm -f "$dir/package-lock.json"
-  if command -v npm >/dev/null 2>&1; then
-    (cd "$dir" && npm install --package-lock-only --ignore-scripts --no-audit --no-fund >/dev/null)
-  else
-    docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$(cd "$dir" && pwd):/w" -w /w \
-      "node:${node_version}-slim" npm install --package-lock-only --ignore-scripts --no-audit --no-fund >/dev/null
-  fi
+  # Always the Node (and so npm) version the image ships, never the host's.
+  docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$(cd "$dir" && pwd):/w" -w /w \
+    "node:${node_version}-slim" npm install --package-lock-only --ignore-scripts --no-audit --no-fund >/dev/null
   npm_lock_libc "$dir/package-lock.json"
 }
 
