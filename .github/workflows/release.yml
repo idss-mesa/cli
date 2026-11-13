@@ -1,0 +1,48 @@
+name: release
+
+# Releases the version in VERSION: every image variant is built from the lock
+# files, tested, scanned, and gets a CycloneDX SBOM attested to its digest;
+# only then are the vX.Y.Z* tags written and the GitHub release created.
+#
+# Merging a change to VERSION is what starts a real release. The steps are
+# the scripts in ci/ (make ci-*); the workflow is shared by the MESA image
+# repos and described in idss-mesa/mesa-updater, ci/README.md "Release".
+on:
+  push:
+    branches: [main]
+    paths: [VERSION]
+  workflow_dispatch:
+    inputs:
+      tag_prefix:
+        description: >-
+          Leave empty to release VERSION (from main only). For a test run give
+          a prefix like ci-test-a-: it writes ci-test-a-vX.Y.Z* tags and a
+          draft GitHub release.
+        type: string
+        default: ''
+      gpu:
+        description: Build the GPU variants (only a test run may turn this off; runs from other branches than main must)
+        type: boolean
+        default: true
+
+permissions: {}
+
+# One release at a time; later ones wait in line (none is dropped).
+concurrency:
+  group: release
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  release:
+    permissions:
+      contents: write      # the GitHub release and its git tag
+      id-token: write      # keyless signing of the SBOM attestations
+    uses: idss-mesa/mesa-updater/.github/workflows/mesa-release.yml@44d7a05ac948d63024ec41c6412caa2562c523f9
+    with:
+      tag_prefix: ${{ inputs.tag_prefix || '' }}
+      gpu: ${{ github.event_name != 'workflow_dispatch' || inputs.gpu }}
+    secrets:
+      HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
+      HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
+      MESA_GPU_DISPATCH_PRIVATE_KEY: ${{ secrets.MESA_GPU_DISPATCH_PRIVATE_KEY }}
