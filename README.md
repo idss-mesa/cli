@@ -251,12 +251,16 @@ gpu/                  NVIDIA GPU variant (:gpu), layered on the CPU image
   locks/              GPU pip lock
   test-gpu.sh         GPU smoke test (make test-gpu)
   de-tool.json        DE admin tool-import body for mesa-cli-gpu
+VERSION               the next release (X.Y.Z)
+mesa.env              image name, build context and test settings for ci/mesa-ci.sh
 relock.sh             regenerates every lock file (make relock)
-ci/                   relock helpers and the list of pinned downloads (pins.tsv)
-sbom/locks.tsv        which lock files make up each image variant (input to the SBOM tooling)
+ci/                   shared CI scripts copied from idss-mesa/mesa-updater (do not edit; ci/SHARED.sha256),
+                      plus this repo's pins.tsv (pinned downloads) and test-cpu.sh (CPU smoke test)
+sbom/                 locks.tsv: lock files per image variant; allow.tsv: what may be present without a lock entry
 docs/
   mesa-terminal.html  splash-screen design mockup
 .github/workflows/
+  pr.yml              pull requests: build, test and SBOM cross-check of the CPU and sandbox images (make ci-*)
   harbor.yml          CPU image CI (push to main, weekly; skips gpu/-, README- and Makefile-only pushes)
   harbor-gpu.yml      GPU image build + push (manual only)
 ```

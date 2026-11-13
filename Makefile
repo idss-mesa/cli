@@ -9,6 +9,14 @@ repo = harbor.cyverse.org/vice/mesa-cli
 relock:           ## regenerate every lock file from its intent file (README "Locks"); needs docker, uv, crane
 	./relock.sh
 
+# ---- what the pull-request workflow runs (ci/mesa-ci.sh; VARIANT=cpu|sandbox|gpu|gpu-sandbox) ----
+.PHONY: ci-check ci-build ci-test ci-sbom
+ci-check:         ## static checks: shared ci/ files unchanged, VERSION, locks and pins parse
+	ci/mesa-ci.sh check
+
+ci-build ci-test ci-sbom: ## build / test / SBOM cross-check of one variant as a local image; ci-sbom needs syft and crane (ci/install-tools.sh)
+	ci/mesa-ci.sh $(@:ci-%=%)
+
 build:            ## CPU image (:latest, amd64) via bash/Makefile
 	$(MAKE) -C bash build
 
