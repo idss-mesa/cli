@@ -49,7 +49,8 @@ ARG DUCKDB_SHA256_ARM64=859e1875d2a9515fbb4bf8871061437a14af82320da68c753f094c4b
 ARG GH_VERSION=2.103.3
 ARG GH_SHA256_AMD64=e3bafef96328d1a67de3a968bdfe1cc2ffd58cf6aba8b5e201356897ed06bb3d
 ARG GH_SHA256_ARM64=cac3ff84b60b68e64cca69f31f303210c26320361cc3286b773655d4226b7b06
-# irods-mcp-server is built from source at this commit (go.sum pins its modules)
+# irods-mcp-server is built from source at this commit (go.sum pins its
+# modules); the commit is stamped into the binary (`go version -m`)
 ARG IRODS_MCP_COMMIT=8b1c231394601df49c66929bde971d167288c001
 # Agent CLIs from npm (Claude Code, Codex, claude-code-router, filesystem MCP
 # server) are locked in locks/npm/package-lock.json. better-sqlite3 (a
@@ -118,7 +119,8 @@ RUN GO_SHA256=$([ "$TARGETARCH" = "arm64" ] && echo "$GO_SHA256_ARM64" || echo "
 RUN git init -q /tmp/irods-mcp-server && cd /tmp/irods-mcp-server && \
     git fetch -q --depth 1 https://github.com/idss-mesa/irods-mcp-server "${IRODS_MCP_COMMIT}" && \
     git checkout -q FETCH_HEAD && test "$(git rev-parse HEAD)" = "${IRODS_MCP_COMMIT}" && \
-    HOME=/tmp/go-home CGO_ENABLED=0 GOFLAGS=-mod=readonly GOPATH=/tmp/go GOCACHE=/tmp/go-cache /usr/local/go/bin/go build -o /usr/local/bin/irods-mcp-server ./cmd/main.go && \
+    HOME=/tmp/go-home CGO_ENABLED=0 GOFLAGS=-mod=readonly GOPATH=/tmp/go GOCACHE=/tmp/go-cache /usr/local/go/bin/go build -buildvcs=true -o /usr/local/bin/irods-mcp-server ./cmd && \
+    HOME=/tmp/go-home /usr/local/go/bin/go version -m /usr/local/bin/irods-mcp-server | grep -F "vcs.revision=${IRODS_MCP_COMMIT}" && \
     cd / && rm -rf /tmp/irods-mcp-server /tmp/go /tmp/go-cache /tmp/go-home
 
 # install ttyd (pinned + sha256)

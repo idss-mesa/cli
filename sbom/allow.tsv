@@ -1,0 +1,21 @@
+# What may be in the image without a lock entry. Columns (tab separated), see
+# ci/README.md:
+# rule	layer	value	reason
+purl-type	*	deb	Ubuntu-archive packages are not pinned by design; this SBOM is their record
+path	cpu	/usr/local/lib/node_modules	npm and corepack shipped inside the pinned Node.js tarball
+path	cpu	/usr/lib/ruby	Ruby gems shipped by Ubuntu packages (lolcat needs ruby)
+path	cpu	/usr/share/rubygems-integration	Ruby gems shipped by Ubuntu packages
+path	cpu	/usr/lib/x86_64-linux-gnu/rubygems-integration	Ruby gems shipped by Ubuntu packages (amd64)
+path	cpu	/usr/lib/aarch64-linux-gnu/rubygems-integration	Ruby gems shipped by Ubuntu packages (arm64)
+path	cpu	/usr/share/java	jar shipped by an Ubuntu package (gettext)
+path	cpu	/usr/lib/python3/dist-packages	Python modules shipped by Ubuntu packages (mercurial)
+purl	cpu	pkg:pypi/pip@*	pip in the /opt/mesa venv is the copy bundled with the base image's Python
+path	cpu	/opt/conda/envs/geospatial/lib/python3.10/site-packages/setuptools	copies and Windows launchers vendored inside the locked setuptools
+path	cpu	/opt/conda/envs/geospatial/lib/python3.10/site-packages/pip/_vendor	Windows launchers vendored inside the locked pip
+path	cpu	/opt/mesa/lib/python3.13/site-packages/pip/_vendor	Windows launchers vendored inside the venv pip
+path	cpu	/opt/conda/envs/geospatial/share/hwloc	web assets inside the locked conda package hwloc
+purl	cpu	pkg:pypi/pdal@*	Python distribution of the locked conda package python-pdal
+purl	cpu	pkg:pypi/pdal-plugins@*	Python distribution shipped by the locked conda PDAL packages
+purl	cpu	pkg:pypi/shiboken6@*	Python distribution of the locked conda package pyside6
+purl	cpu	pkg:pypi/tzdata@*	Python distribution of the locked conda package python-tzdata (conda versions it 2026e-style)
+path	gpu	/usr/local/bin/ollama.bin	Go modules compiled into the pinned Ollama binary
