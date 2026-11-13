@@ -45,4 +45,7 @@ jobs:
     secrets:
       HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
       HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
+      # Only a name here: the key is a secret of this repo's `gpu-dispatch`
+      # environment, which only runs on main can use. It must not exist as a
+      # repository or organisation secret (any branch could then read it).
       MESA_GPU_DISPATCH_PRIVATE_KEY: ${{ secrets.MESA_GPU_DISPATCH_PRIVATE_KEY }}
