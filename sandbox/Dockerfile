@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1.29.0@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
 # MESA CLI — AI Sandbox variant. The published image with every path from
 # UID 1000 to root removed: no sudo, no setuid/setgid binaries, no file
 # capabilities, no account passwords. Built on the CPU image (-> :sandbox) or
@@ -10,12 +10,11 @@
 ARG BASE_IMAGE=harbor.cyverse.org/vice/mesa-cli:latest
 FROM ${BASE_IMAGE}
 
-LABEL org.label-schema.name="CyVerse VICE MESA CLI (AI Sandbox)" \
-      org.label-schema.description="MESA CLI for CyVerse VICE with sudo and every privilege-escalation path removed: the AI-agent sandbox variant" \
-      org.label-schema.url="https://cyverse.org" \
-      org.label-schema.vcs-url="https://github.com/idss-mesa/cli" \
-      org.label-schema.vendor="CyVerse" \
-      org.label-schema.schema-version="1.0.0"
+# Version, revision, source and vendor labels are inherited from the base.
+ARG BASE_IMAGE
+LABEL org.opencontainers.image.title="MESA Cloud Shell (AI Sandbox)" \
+      org.opencontainers.image.description="MESA cloud shell with sudo and every privilege-escalation path removed: the AI-agent sandbox variant" \
+      org.opencontainers.image.base.name="${BASE_IMAGE}"
 
 USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

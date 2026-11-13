@@ -4,7 +4,10 @@
 platform = linux/amd64
 repo = harbor.cyverse.org/vice/mesa-cli
 
-.PHONY: build push pull-base build-gpu test-gpu push-gpu run-gpu
+.PHONY: build push pull-base build-gpu test-gpu push-gpu run-gpu relock
+
+relock:           ## regenerate every lock file from its intent file (README "Locks"); needs docker, uv, crane
+	./relock.sh
 
 build:            ## CPU image (:latest, amd64) via bash/Makefile
 	$(MAKE) -C bash build

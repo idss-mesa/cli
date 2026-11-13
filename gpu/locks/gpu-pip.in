@@ -1,0 +1,12 @@
+# GPU layer additions to the base conda Python (/opt/conda). torch and
+# torchvision are the CUDA 12 (cu126) builds from PyTorch's index; never the
+# PyPI builds (CUDA 13, needs driver R580+).
+--extra-index-url https://download.pytorch.org/whl/cu126
+torch==2.14.0+cu126
+torchvision==0.29.0+cu126
+nvitop
+nvidia-ml-py
+huggingface_hub
+ollama
+transformers
+accelerate
