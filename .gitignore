@@ -1,3 +1,6 @@
 # Python bytecode (e.g. from running gpu/pip-guard.py locally)
 __pycache__/
 *.pyc
+# ci/mesa-ci.sh output and the tools ci/install-tools.sh downloads
+out/
+.tools/

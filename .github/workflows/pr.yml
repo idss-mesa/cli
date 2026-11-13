@@ -1,0 +1,20 @@
+name: pr
+
+# Pull-request check: static checks, then build + test + SBOM cross-check of
+# the CPU image (amd64 and arm64) and the sandbox image. The steps live in
+# ci/mesa-ci.sh; the workflow is shared by the MESA image repos. No secrets,
+# nothing is pushed.
+on:
+  pull_request:
+
+permissions: {}
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  pr:
+    permissions:
+      contents: read
+    uses: idss-mesa/mesa-updater/.github/workflows/mesa-pr.yml@33f6e272b7b26b5d5bbbc2a9d170c16df492851b
