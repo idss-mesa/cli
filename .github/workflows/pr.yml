@@ -17,4 +17,4 @@ jobs:
   pr:
     permissions:
       contents: read
-    uses: idss-mesa/mesa-updater/.github/workflows/mesa-pr.yml@33f6e272b7b26b5d5bbbc2a9d170c16df492851b
+    uses: idss-mesa/mesa-updater/.github/workflows/mesa-pr.yml@44d7a05ac948d63024ec41c6412caa2562c523f9

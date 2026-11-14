@@ -260,7 +260,10 @@ sbom/                 locks.tsv: lock files per image variant; allow.tsv: what m
 docs/
   mesa-terminal.html  splash-screen design mockup
 .github/workflows/
-  pr.yml              pull requests: build, test and SBOM cross-check of the CPU and sandbox images (make ci-*)
+  pr.yml              pull requests: build, test and SBOM cross-check of the CPU and sandbox images (make ci-*);
+                      fails when VERSION is already released and the image's files differ from that release
+  release.yml         releases VERSION when a change to it is merged: every variant built from the locks, tested,
+                      SBOM attested to its digest, then the vX.Y.Z* tags and a GitHub release
   harbor.yml          CPU image CI (push to main, weekly; skips gpu/-, README- and Makefile-only pushes)
   harbor-gpu.yml      GPU image build + push (manual only)
 ```
